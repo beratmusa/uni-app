@@ -1,9 +1,12 @@
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from './lib/notifications'; 
 import './global.css';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useEffect, useState, useRef } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Menu } from 'lucide-react-native';
+import { DetailModal, DetailData } from './components/DetailModal';
 
 // --- BİLEŞENLER ---
 import { SideMenu } from './components/SideMenu';
@@ -12,7 +15,7 @@ import { AgendaList, GundemItem } from './components/AgendaList';
 import { DiningList, YemekhaneItem } from './components/DiningList';
 import { AnnouncementList, HaberItem } from './components/AnnouncementList';
 import { EventList, EtkinlikItem } from './components/EventList';
-import { Footer } from './components/Footer'; // <-- YENİ IMPORT
+import { Footer } from './components/Footer'; 
 
 // API Tipleri
 interface AfisData { id: number; adTR: string; icerikTR: string; foto1: string; }
@@ -34,14 +37,34 @@ export default function App() {
   const [haberler, setHaberler] = useState<HaberItem[]>([]);
   const [yemekListesi, setYemekListesi] = useState<YemekhaneItem[]>([]);
   const [etkinlikler, setEtkinlikler] = useState<EtkinlikItem[]>([]);
-  
   const [loading, setLoading] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
-
-  // --- SCROLL AYARLARI ---
   const scrollViewRef = useRef<ScrollView>(null);
-  const [diningY, setDiningY] = useState(0);   // Yemekhane Konumu
-  const [contactY, setContactY] = useState(0); // <-- İletişim Konumu (YENİ)
+  const [diningY, setDiningY] = useState(0); 
+  const [contactY, setContactY] = useState(0);
+  const [expoPushToken, setExpoPushToken] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<DetailData | null>(null);
+
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(token => {
+      if(token) setExpoPushToken(token);
+    });
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log("Bildirim Geldi:", notification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log("Bildirime Tıklandı:", response);
+      //  burada ilgili habere yönlendirme yapılabilir
+    });
+
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    };
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -61,6 +84,45 @@ export default function App() {
 
   useEffect(() => { fetchData(); }, []);
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  const handleAnnouncementClick = (item: HaberItem) => {
+    setSelectedItem({
+      title: item.baslikTR,
+      date: formatDate(item.baslamaZamani),
+      content: item.icerikTR || item.icerikEN || "<p>İçerik bulunamadı</p>",
+      category: item.kategori,
+      image: null
+    });
+    setModalVisible(true);
+  };
+
+  const handleEventClick = (item: EtkinlikItem) => {
+    setSelectedItem({
+      title: item.baslikTR,
+      date: formatDate(item.baslamaZamani),
+      content: item.icerikTR, // Varsa
+      image: item.pathTR,     // Etkinlik resmi
+      location: item.yerTR,   // Konum
+      category: "Etkinlik"
+    });
+    setModalVisible(true);
+  };
+
+  const handleAgendaClick = (item: GundemItem) => {
+  setSelectedItem({
+    title: item.baslikTR,
+    date: new Date(item.eklemeZamani).toLocaleDateString('tr-TR'),
+    content: item.baslikTR, // API'den içerik geliyorsa buraya item.icerikTR yaz
+    image: item.path,
+    category: "Gündem"
+  });
+  setModalVisible(true);
+};
   
   const scrollToDiningSection = () => {
     scrollViewRef.current?.scrollTo({ y: diningY, animated: true });
@@ -79,7 +141,7 @@ export default function App() {
         {/* Navbar */}
         <View className="px-4 py-4 bg-white border-b border-gray-200 shadow-sm z-10 flex-row justify-between items-center">
           <View>
-            <Text className="text-xl font-extrabold text-red-700 tracking-tight">Kastamonu Üniversitesi</Text>
+            <Text className="text-xl font-extrabold text-red-800 tracking-tight">Kastamonu Üniversitesi</Text>
             <Text className="text-xs text-gray-500 font-medium">Mobil Bilgi Sistemi</Text>
           </View>
           <TouchableOpacity onPress={() => setMenuVisible(true)} className="p-2 bg-gray-100 rounded-full active:bg-gray-200">
@@ -92,7 +154,7 @@ export default function App() {
           <SideMenu 
             onClose={() => setMenuVisible(false)} 
             onScrollToDining={scrollToDiningSection}
-            onScrollToContact={scrollToContactSection} // <-- YENİ PROP
+            onScrollToContact={scrollToContactSection} 
           />
         )}
 
@@ -108,16 +170,15 @@ export default function App() {
           >
             
             <HeroSlider data={slaytlar} />
-            <AgendaList data={gundem} />
+            <AgendaList data={gundem} onItemClick={handleAgendaClick}/>
             
-            {/* Yemek Listesi Konumu */}
             <DiningList 
               data={yemekListesi} 
               onLayout={(event) => setDiningY(event.nativeEvent.layout.y)}
             />
 
-            <EventList data={etkinlikler} />
-            <AnnouncementList data={haberler} />
+            <EventList data={etkinlikler} onItemClick={handleEventClick}/>
+            <AnnouncementList data={haberler} onItemClick={handleAnnouncementClick}/>
 
             <Footer 
               onLayout={(event) => setContactY(event.nativeEvent.layout.y)} 
@@ -125,6 +186,11 @@ export default function App() {
             
           </ScrollView>
         )}
+        <DetailModal 
+          visible={modalVisible}
+          data={selectedItem}
+          onClose={() => setModalVisible(false)}
+        />
         <StatusBar style="dark" />
       </SafeAreaView>
     </SafeAreaProvider>

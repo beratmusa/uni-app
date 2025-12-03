@@ -2,15 +2,25 @@ import { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Calendar, ChevronRight } from 'lucide-react-native';
 
-export interface HaberItem { id: number; kategori: string; baslikTR: string; baslamaZamani: string; }
+export interface HaberItem { 
+  id: number; 
+  kategori: string; 
+  baslikTR: string; 
+  baslamaZamani: string; 
+  // Yeni eklenenler:
+  icerikTR?: string | null; 
+  icerikEN?: string | null;
+  haberDuyuruFoto?: string | null;
+}
 
 interface AnnouncementListProps {
   data: HaberItem[];
+  onItemClick: (item: HaberItem) => void;
 }
 
 const KATEGORILER = ["Tümü", "Üniversite Haberleri", "Birim Haberleri", "Üniversite Duyuruları", "Öğrenci Duyuruları"];
 
-export const AnnouncementList = ({ data }: AnnouncementListProps) => {
+export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) => {
   const [selectedCategory, setSelectedCategory] = useState("Tümü");
 
   const formatDate = (dateString: string) => {
@@ -50,7 +60,7 @@ export const AnnouncementList = ({ data }: AnnouncementListProps) => {
           <Text className="text-center text-gray-400 py-10">Bu kategoride henüz içerik yok.</Text>
         ) : (
           filteredList.map((item) => (
-            <TouchableOpacity key={item.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-row items-start active:bg-gray-50">
+            <TouchableOpacity key={item.id} onPress={() => onItemClick(item)} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex-row items-start active:bg-gray-50">
               <View className="flex-1 mr-2">
                 <Text className="text-gray-800 font-bold text-sm leading-5 mb-2">{item.baslikTR}</Text>
                 <View className="flex-row items-center justify-between mt-1">

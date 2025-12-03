@@ -1,17 +1,30 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 
+import { PdfModal } from './PdfModal';
+
+const PDF_LINKS = {
+  GENEL: "https://oidb.kastamonu.edu.tr/images/2025/dokumanlar/Akademik%20Takvim%201.pdf",
+  ACADEMİC_Calendar_EN: "https://oidb.kastamonu.edu.tr/images/2025/dokumanlar/Akademik%20Takvim%20Ing%201%201.pdf", 
+  TIP: "https://oidb.kastamonu.edu.tr/images/2025/dokumanlar/Akademik%20Takvim%20Tip%20Fakultesi.pdf", 
+  VETERINER: "https://oidb.kastamonu.edu.tr/images/2025/dokumanlar/K.U.%20Veteriner%20Fakultesi%202025-2026%20Egitim-Ogretim%20Yili%20Akademik%20Takvimi.pdf"
+};
+
 interface SideMenuProps {
   onClose: () => void;
   onScrollToDining: () => void;
-  onScrollToContact: () => void; // <-- YENİ EKLENDİ
+  onScrollToContact: () => void; 
 }
 
 export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideMenuProps) => {
   const [isCalendarOpen, setCalendarOpen] = useState(false);
+
+  const [pdfVisible, setPdfVisible] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfTitle, setPdfTitle] = useState("");
 
   // Yemek Listesine Git
   const handleDiningClick = () => {
@@ -23,6 +36,15 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const handleContactClick = () => {
     onClose();
     setTimeout(() => onScrollToContact(), 300);
+  };
+
+  const handleOpenPdf = (url: string, title: string) => {
+    // URL'in PDF olup olmadığını kontrol edelim
+    // Eğer PDF değilse (örn: OBS sitesi) yine tarayıcıda açmak daha sağlıklı olabilir
+    // Ama biz şimdilik hepsini uygulama içinde açalım.
+    setPdfUrl(url);
+    setPdfTitle(title);
+    setPdfVisible(true);
   };
 
   return (
@@ -67,14 +89,26 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
                   {isCalendarOpen && (
                     <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
-                      <SubMenuLink title="Genel Takvim" onPress={onClose} />
-                      <SubMenuLink title="Tıp Fakültesi" onPress={onClose} />
-                      <SubMenuLink title="Veteriner Fakültesi" onPress={onClose} />
+                      <SubMenuLink 
+                        title="Genel Takvim" 
+                        onPress={() => handleOpenPdf(PDF_LINKS.GENEL, "Genel Akademik Takvim")} 
+                      />
+                      <SubMenuLink 
+                        title="Academic Calendar (EN)" 
+                        onPress={() => handleOpenPdf(PDF_LINKS.ACADEMİC_Calendar_EN, "Academic Calendar")} 
+                      />
+                      <SubMenuLink 
+                        title="Tıp Fakültesi" 
+                        onPress={() => handleOpenPdf(PDF_LINKS.TIP, "Tıp Fak. Takvimi")} 
+                      />
+                      <SubMenuLink 
+                        title="Veteriner Fakültesi" 
+                        onPress={() => handleOpenPdf(PDF_LINKS.VETERINER, "Veteriner Fak. Takvimi")} 
+                      />
                     </View>
                   )}
                 </View>
 
-                {/* --- İLETİŞİM LİNKİ GÜNCELLENDİ --- */}
                 <TouchableOpacity onPress={handleContactClick} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
                     <View className="opacity-60 text-gray-700"><Phone size={20} /></View>
                     <Text className="ml-3 font-semibold text-gray-700 text-base">İletişim & Rehber</Text>
@@ -95,6 +129,12 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
           </SafeAreaView>
         </Animated.View>
       </View>
+      <PdfModal 
+        visible={pdfVisible}
+        url={pdfUrl}
+        title={pdfTitle}
+        onClose={() => setPdfVisible(false)}
+      />
     </Animated.View>
   );
 };
@@ -111,5 +151,6 @@ const SubMenuLink = ({ title, onPress }: { title: string, onPress: () => void })
   <TouchableOpacity onPress={onPress} className="flex-row items-center p-3 rounded-lg active:bg-blue-50">
     <View className="w-1.5 h-1.5 rounded-full bg-blue-300 mr-3" />
     <Text className="text-gray-600 font-medium text-sm">{title}</Text>
+    <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
   </TouchableOpacity>
 );

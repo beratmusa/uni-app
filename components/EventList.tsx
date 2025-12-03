@@ -6,15 +6,17 @@ export interface EtkinlikItem {
   baslikTR: string;
   baslamaZamani: string;
   bitisZamani: string;
-  pathTR: string; 
-  yerTR: string;  
+  pathTR: string;
+  yerTR: string;
+  icerikTR?: string | null;
 }
 
 interface EventListProps {
   data: EtkinlikItem[];
+  onItemClick: (item: EtkinlikItem) => void;
 }
 
-export const EventList = ({ data }: EventListProps) => {
+export const EventList = ({ data, onItemClick }: EventListProps) => {
 
   // Tarih Formatlama (Gün) -> "25"
   const getDay = (dateString: string) => {
@@ -45,7 +47,8 @@ export const EventList = ({ data }: EventListProps) => {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-ml-4 pl-4">
         {data.map((item) => (
           <TouchableOpacity 
-            key={item.id} 
+            key={item.id}
+            onPress={() => onItemClick(item)} 
             className="mr-4 w-72 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-2 active:opacity-90"
           >
             
