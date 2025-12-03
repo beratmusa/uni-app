@@ -105,9 +105,9 @@ export default function App() {
     setSelectedItem({
       title: item.baslikTR,
       date: formatDate(item.baslamaZamani),
-      content: item.icerikTR, // Varsa
-      image: item.pathTR,     // Etkinlik resmi
-      location: item.yerTR,   // Konum
+      content: item.icerikTR, 
+      image: item.pathTR,     
+      location: item.yerTR,   
       category: "Etkinlik"
     });
     setModalVisible(true);
@@ -117,7 +117,7 @@ export default function App() {
   setSelectedItem({
     title: item.baslikTR,
     date: new Date(item.eklemeZamani).toLocaleDateString('tr-TR'),
-    content: item.baslikTR, // API'den içerik geliyorsa buraya item.icerikTR yaz
+    content: item.baslikTR,
     image: item.path,
     category: "Gündem"
   });
@@ -171,6 +171,8 @@ export default function App() {
             
             <HeroSlider data={slaytlar} />
             <AgendaList data={gundem} onItemClick={handleAgendaClick}/>
+
+            <AnnouncementList data={haberler} onItemClick={handleAnnouncementClick}/>
             
             <DiningList 
               data={yemekListesi} 
@@ -178,7 +180,7 @@ export default function App() {
             />
 
             <EventList data={etkinlikler} onItemClick={handleEventClick}/>
-            <AnnouncementList data={haberler} onItemClick={handleAnnouncementClick}/>
+            
 
             <Footer 
               onLayout={(event) => setContactY(event.nativeEvent.layout.y)} 

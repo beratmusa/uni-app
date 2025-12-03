@@ -42,11 +42,13 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
           top: 0,
           bottom: 0,
           width: 18, 
+          borderTopRightRadius: 30,
+          borderBottomRightRadius: 30
         }}
       />
 
       {/* --- BAŞLIK ALANI --- */}
-      <View className="px-6 mb-8 flex-row justify-between items-end">
+      <View className="px-8 mb-8 flex-row justify-between items-end">
         <View>
           {/* Üst Başlık (Öne Çıkanlar) */}
           <View className="flex-row items-center mb-1">
@@ -54,7 +56,7 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
             <Text className="text-blue-700 font-bold text-xs uppercase tracking-widest ml-1">Öne Çıkanlar</Text>
           </View>
           
-          {/* --- GRADYAN YAZI (MASKELEME TEKNİĞİ) --- */}
+          
           <MaskedView
             style={{ height: 45, width: 200 }} // Yazının sığacağı kadar alan
             maskElement={
@@ -63,7 +65,7 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
               </Text>
             }
           >
-            {/* Yazının içini dolduracak gradyan renkler */}
+            
             <LinearGradient
               colors={['#0f172a', '#1e3a8a', '#3b82f6']}
               start={{ x: 0, y: 0 }}
