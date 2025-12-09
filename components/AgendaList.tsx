@@ -7,11 +7,12 @@ import { useLanguage } from '../context/LanguageContext';
 export interface GundemItem { 
   id: number; 
   baslikTR: string; 
-  baslikEN?: string; // Var olan
+  baslikEN?: string;
   path: string; 
   eklemeZamani: string; 
   icerikTR?: string; 
-  icerikEN?: string; // <-- YENİ EKLENDİ: İngilizce içerik desteği
+  icerikEN?: string;
+  gundemFotolar?: string[];
 }
 
 interface AgendaListProps {

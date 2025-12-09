@@ -33,6 +33,7 @@ const translations = {
     emailTitle: "E-Posta",
     webTitle: "Web Sitesi",
     copyright: "© 2025 Kastamonu Üniversitesi Bilgi İşlem Daire Başkanlığı",
+    gallery: "Galeri",
     categories: {
       all: "Tümü",
       student: "Öğrenci",
@@ -71,6 +72,7 @@ const translations = {
     emailTitle: "E-Mail",
     webTitle: "Website",
     copyright: "© 2025 Kastamonu University IT Department",
+    gallery: "Gallery",
     categories: {
       all: "All",
       student: "Student",

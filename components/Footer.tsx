@@ -1,5 +1,4 @@
 import { View, Text, TouchableOpacity, Linking, LayoutChangeEvent } from 'react-native';
-// 1. Twitter'ı kaldırdık, X'i ekledik
 import { Phone, Mail, MapPin, Globe, Facebook, Instagram, Linkedin, X } from 'lucide-react-native';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -16,7 +15,7 @@ export const Footer = ({ onLayout }: FooterProps) => {
 
   return (
     <View 
-      className="bg-red-950 px-6 py-10 mt-10" 
+      className="bg-red-950 px-6 py-10" // DÜZELTME: 'mt-10' silindi
       onLayout={onLayout} 
     >
       
@@ -77,7 +76,6 @@ export const Footer = ({ onLayout }: FooterProps) => {
       </View>
 
       <View className="flex-row gap-4 mb-8 border-t border-red-900 pt-6">
-        {/* 2. Twitter yerine X ikonunu koyduk */}
         <SocialIcon icon={<X size={20} color="white" />} /> 
         <SocialIcon icon={<Facebook size={20} color="white" />} />
         <SocialIcon icon={<Instagram size={20} color="white" />} />
