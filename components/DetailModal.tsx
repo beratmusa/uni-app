@@ -1,8 +1,9 @@
-import { Modal, View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
+import { Modal, View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Share, Platform } from 'react-native'; // <-- Platform EKLENDİ
 import { X, Calendar, Share2, MapPin } from 'lucide-react-native';
 import RenderHtml from 'react-native-render-html';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -23,6 +24,7 @@ interface DetailModalProps {
 
 export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
   const insets = useSafeAreaInsets();
+  const { dictionary } = useLanguage();
 
   if (!data) return null;
 
@@ -42,9 +44,10 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
     img: { width: '100%', borderRadius: 12, marginVertical: 10 },
   };
 
-  // --- DİNAMİK YÜKSEKLİK AYARI ---
-  const isEvent = data.category === 'Etkinlik';
-  const imageHeight = isEvent ? 'h-[500px]' : 'h-64';
+  const isEvent = data.category === dictionary.events || data.category === 'Etkinlik';
+  const imageHeight = isEvent ? 'h-[600px]' : 'h-64';
+  const resizeMode = isEvent ? 'contain' : 'cover';
+  const bgStyle = isEvent ? 'bg-gray-50' : 'bg-gray-200';
 
   return (
     <Modal
@@ -55,17 +58,20 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
     >
       <View className="flex-1 bg-white">
         
-        {/* HEADER */}
+        {/* HEADER (DÜZELTİLDİ) */}
         <View 
           className="flex-row justify-between items-center px-4 pb-3 border-b border-gray-100 bg-white z-10"
-          style={{ paddingTop: insets.top + 10 }}
+          style={{ 
+            // iOS (PageSheet) için sabit boşluk, Android (FullScreen) için safe area
+            paddingTop: Platform.OS === 'android' ? insets.top + 10 : 15 
+          }}
         >
           <TouchableOpacity onPress={onClose} className="p-2 bg-gray-100 rounded-full">
             <X color="#1f2937" size={24} />
           </TouchableOpacity>
 
           <Text className="font-bold text-gray-500 text-xs uppercase tracking-widest w-48 text-center" numberOfLines={1}>
-            {data.category || "Detay"}
+            {data.category || dictionary.details}
           </Text>
 
           <TouchableOpacity onPress={handleShare} className="p-2 bg-blue-50 rounded-full">
@@ -76,17 +82,15 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
         {/* İÇERİK */}
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false} bounces={false}>
           
-          
           {data.image && (
             <Image 
               source={{ uri: data.image }} 
-              className={`w-full ${imageHeight} bg-gray-200`}
-              resizeMode="cover" 
+              className={`w-full ${imageHeight} ${bgStyle}`}
+              resizeMode={resizeMode}
             />
           )}
 
           <View className="p-5 pb-20">
-            {/* ETİKETLER */}
             <View className="flex-row items-center mb-3 space-x-4">
               <View className="flex-row items-center bg-blue-50 px-3 py-1 rounded-lg">
                 <Calendar size={14} color="#2563eb" />
@@ -103,12 +107,10 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
               )}
             </View>
 
-            {/* BAŞLIK */}
             <Text className="text-2xl font-extrabold text-gray-900 leading-8 mb-6">
               {data.title}
             </Text>
 
-            {/* HTML İÇERİK */}
             {data.content ? (
               <RenderHtml
                 contentWidth={width - 40}

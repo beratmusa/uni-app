@@ -1,10 +1,12 @@
 import { View, Text, ScrollView, Image, TouchableOpacity, ImageBackground } from 'react-native';
 import { MapPin, Clock } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../context/LanguageContext'; // <-- HOOK
 
 export interface EtkinlikItem {
   id: number;
   baslikTR: string;
+  baslikEN?: string; // <-- EKLENDİ
   baslamaZamani: string;
   bitisZamani: string;
   pathTR: string;
@@ -17,32 +19,28 @@ interface EventListProps {
   onItemClick: (item: EtkinlikItem) => void;
 }
 
-
 const CARD_WIDTH = 256; 
 const SPACING = 16;     
 const SNAP_INTERVAL = CARD_WIDTH + SPACING;
 
 export const EventList = ({ data, onItemClick }: EventListProps) => {
-  
+  const { language, dictionary } = useLanguage(); // <-- DİL
   const scrollRef = useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // ... (Otomatik kaydırma useEffect kodu aynı kalacak) ...
   useEffect(() => {
     if (data.length === 0) return;
-
     const interval = setInterval(() => {
       let nextIndex = currentIndex + 1;
-
       if (nextIndex >= data.length) {
         nextIndex = 0;
         scrollRef.current?.scrollTo({ x: 0, animated: true });
       } else {
         scrollRef.current?.scrollTo({ x: nextIndex * SNAP_INTERVAL, animated: true });
       }
-      
       setCurrentIndex(nextIndex);
     }, 3500);
-
     return () => clearInterval(interval);
   }, [currentIndex, data.length]);
 
@@ -53,12 +51,14 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
 
   const getMonth = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', { month: 'long' }).toUpperCase();
+    // Locale dinamik yapıldı
+    return date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { month: 'long' }).toUpperCase();
   };
 
   const getShortMonth = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', { month: 'short' }).toUpperCase();
+    // Locale dinamik yapıldı
+    return date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { month: 'short' }).toUpperCase();
   };
 
   const getTime = (dateString: string) => {
@@ -66,7 +66,7 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
     return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const currentMonthName = data.length > 0 ? getMonth(data[0].baslamaZamani) : "KASIM";
+  const currentMonthName = data.length > 0 ? getMonth(data[0].baslamaZamani) : (language === 'tr' ? "KASIM" : "NOV");
   const currentYear = new Date().getFullYear();
 
   return (
@@ -77,29 +77,33 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
       style={{ backgroundColor: '#e5e5e5' }}
     >
       <View className="px-4">
-        
+        {/* Header Başlık (Opsiyonel olarak buraya da ekleyebilirsiniz) */}
+        <Text className="text-stone-500 font-bold text-xs uppercase tracking-widest mb-4 ml-1">
+            {dictionary.campusLife}
+        </Text>
+
         <View className="relative">
-          {/* ÇİVİ */}
+          {/* Çivi */}
           <View className="absolute -top-3 left-1/2 -ml-2 z-20 w-4 h-4 bg-stone-800 rounded-full border-2 border-stone-400 shadow-md" />
 
-          {/* TAKVİM GÖVDESİ */}
+          {/* Gövde */}
           <View className="bg-white rounded-lg shadow-2xl shadow-black border border-slate-200 overflow-hidden pb-4">
             
-            {/* SPİRAL */}
+            {/* Spiral */}
             <View className="bg-slate-100 h-8 flex-row justify-evenly items-center border-b border-slate-200">
               {[...Array(10)].map((_, i) => (
                 <View key={i} className="w-2.5 h-2.5 rounded-full bg-stone-800 shadow-inner" />
               ))}
             </View>
 
-            {/* BAŞLIK */}
+            {/* Başlık */}
             <View className="bg-red-700 py-3 items-center justify-center shadow-sm">
               <Text className="text-white font-black text-lg tracking-widest shadow-black/20 shadow-offset-1">
                 {currentMonthName} {currentYear}
               </Text>
             </View>
 
-            {/* ARKA PLAN ÇİZGİLERİ */}
+            {/* Çizgiler */}
             <View className="absolute top-24 left-0 right-0 bottom-0 z-0 opacity-10">
                <View className="mt-12 h-[1px] bg-slate-900 w-full" />
                <View className="mt-12 h-[1px] bg-slate-900 w-full" />
@@ -108,7 +112,7 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
                <View className="mt-12 h-[1px] bg-slate-900 w-full" />
             </View>
 
-            {/* ETKİNLİK KARTLARI */}
+            {/* Kartlar */}
             <View className="pt-5 pb-2 z-10">
               <ScrollView 
                 ref={scrollRef}
@@ -124,7 +128,6 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
                     activeOpacity={0.9}
                     className="mr-4 w-64 bg-white rounded border border-slate-200 shadow-sm overflow-hidden"
                   >
-
                     <View className="h-80 relative"> 
                       <Image 
                         source={{ uri: item.pathTR }} 
@@ -141,10 +144,10 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
                       </View>
                     </View>
 
-                    {/* İçerik */}
                     <View className="p-4">
+                      {/* DİNAMİK BAŞLIK */}
                       <Text className="text-slate-800 font-bold text-sm leading-5 mb-3 h-10" numberOfLines={2}>
-                        {item.baslikTR}
+                        {language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR)}
                       </Text>
 
                       <View className="gap-2">
@@ -163,14 +166,11 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
                         </View>
                       </View>
                     </View>
-
                     <View className="h-1 bg-red-600 w-full" />
-
                   </TouchableOpacity>
                 ))}
               </ScrollView>
             </View>
-
           </View>
         </View>
       </View>

@@ -8,6 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Menu } from 'lucide-react-native';
 import { DetailModal, DetailData } from './components/DetailModal';
 
+// --- CONTEXT ---
+import { useLanguage } from './context/LanguageContext';
+
 // --- BİLEŞENLER ---
 import { SideMenu } from './components/SideMenu';
 import { HeroSlider, SlaytItem } from './components/HeroSlider';
@@ -31,7 +34,8 @@ interface ApiResponse {
 }
 
 export default function MainContent() {
-  // --- STATE ---
+  const { language, dictionary } = useLanguage(); 
+
   const [slaytlar, setSlaytlar] = useState<SlaytItem[]>([]);
   const [gundem, setGundem] = useState<GundemItem[]>([]);
   const [haberler, setHaberler] = useState<HaberItem[]>([]);
@@ -57,7 +61,6 @@ export default function MainContent() {
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log("Bildirime Tıklandı:", response);
-      //  burada ilgili habere yönlendirme yapılabilir
     });
 
     return () => {
@@ -87,15 +90,32 @@ export default function MainContent() {
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    return date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
   };
+
+  // --- KATEGORİ ÇEVİRME (MEVCUT KEY'LERE GÖRE) ---
+  // Hatayı çözen kısım burası. "university_announcement" yerine var olan "admin" veya "general" kullanıyoruz.
+  const getCategoryName = (rawName: string) => {
+    if (rawName === "Öğrenci Duyuruları") return dictionary.categories.student;
+    if (rawName === "Birim Haberleri") return dictionary.categories.academic;
+    
+    // "Üniversite Duyuruları"nı "İdari" (admin) kategorisine eşleştirdik
+    if (rawName === "Üniversite Duyuruları") return dictionary.categories.admin;
+    
+    // "Üniversite Haberleri"ni "Genel" (general) kategorisine eşleştirdik
+    if (rawName === "Üniversite Haberleri") return dictionary.categories.general;
+    
+    return rawName;
+  };
+
+  // --- MODAL İŞLEMLERİ ---
 
   const handleAnnouncementClick = (item: HaberItem) => {
     setSelectedItem({
-      title: item.baslikTR,
+      title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
       date: formatDate(item.baslamaZamani),
-      content: item.icerikTR || item.icerikEN || "<p>İçerik bulunamadı</p>",
-      category: item.kategori,
+      content: language === 'tr' ? (item.icerikTR || item.icerikEN) : (item.icerikEN || item.icerikTR || "<p>Content not available</p>"),
+      category: getCategoryName(item.kategori), // Çevrilmiş kategori ismi
       image: null
     });
     setModalVisible(true);
@@ -103,44 +123,61 @@ export default function MainContent() {
 
   const handleEventClick = (item: EtkinlikItem) => {
     setSelectedItem({
-      title: item.baslikTR,
+      title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
       date: formatDate(item.baslamaZamani),
       content: item.icerikTR, 
       image: item.pathTR,     
       location: item.yerTR,   
-      category: "Etkinlik"
+      category: dictionary.events 
     });
     setModalVisible(true);
   };
 
   const handleAgendaClick = (item: GundemItem) => {
-  setSelectedItem({
-    title: item.baslikTR,
-    date: new Date(item.eklemeZamani).toLocaleDateString('tr-TR'),
-    content: item.baslikTR,
-    image: item.path,
-    category: "Gündem"
-  });
-  setModalVisible(true);
-};
+    setSelectedItem({
+      // 1. BAŞLIK: Dil TR ise TR, değilse EN (yoksa TR)
+      title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
+      
+      // 2. TARİH FORMATI: Dile göre yerelleştirme
+      date: new Date(item.eklemeZamani).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      }),
+      
+      // 3. İÇERİK: Dil TR ise (icerikTR veya başlık), EN ise (icerikEN veya icerikTR veya başlık)
+      content: language === 'tr' 
+        ? (item.icerikTR || item.baslikTR) 
+        : (item.icerikEN || item.icerikTR || item.baslikEN || item.baslikTR),
+        
+      image: item.path,
+      
+      // 4. KATEGORİ: Sözlükten "Gündem" veya "Agenda"
+      category: dictionary.agenda 
+    });
+    setModalVisible(true);
+  };
   
   const scrollToDiningSection = () => {
     scrollViewRef.current?.scrollTo({ y: diningY, animated: true });
   };
 
-  
   const scrollToContactSection = () => {
-    
     scrollViewRef.current?.scrollTo({ y: contactY, animated: true });
   };
+
   return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'left', 'right']}>
         
         {/* Navbar */}
         <View className="px-4 py-4 bg-white border-b border-gray-200 shadow-sm z-10 flex-row justify-between items-center">
           <View>
-            <Text className="text-xl font-extrabold text-red-800 tracking-tight">Kastamonu Üniversitesi</Text>
-            <Text className="text-xs text-gray-500 font-medium">Mobil Bilgi Sistemi</Text>
+            <Text className="text-xl font-extrabold text-red-800 tracking-tight">
+              Kastamonu {language === 'en' ? 'University' : 'Üniversitesi'}
+            </Text>
+            <Text className="text-xs text-gray-500 font-medium">
+              {language === 'en' ? 'Mobile Info System' : 'Mobil Bilgi Sistemi'}
+            </Text>
           </View>
           <TouchableOpacity onPress={() => setMenuVisible(true)} className="p-2 bg-gray-100 rounded-full active:bg-gray-200">
             <Menu color="#1e3a8a" size={24} />
@@ -179,13 +216,15 @@ export default function MainContent() {
 
             <EventList data={etkinlikler} onItemClick={handleEventClick}/>
             
-
             <Footer 
               onLayout={(event) => setContactY(event.nativeEvent.layout.y)} 
             />
             
+            <View className="h-20" /> 
+            
           </ScrollView>
         )}
+        
         <DetailModal 
           visible={modalVisible}
           data={selectedItem}

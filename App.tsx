@@ -14,9 +14,3 @@ export default function App() {
     </LanguageProvider>
   );
 }
-
-// ÖNEMLİ NOT:
-// App bileşeni içinde "useLanguage" kullanamazsın çünkü Provider'ın içindeki çocuklar kullanabilir.
-// Bu yüzden App.tsx'teki tüm kodunu "MainContent" adında yeni bir bileşene taşıyıp,
-// App fonksiyonunu sadece Provider olarak kullanmak en temizidir.
-// Veya şimdilik sadece bileşenleri güncelleyelim, App.tsx'i en son hallederiz.

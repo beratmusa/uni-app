@@ -28,22 +28,17 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfTitle, setPdfTitle] = useState("");
 
-  // Yemek Listesine Git
   const handleDiningClick = () => {
     onClose(); 
     setTimeout(() => onScrollToDining(), 300);
   };
 
-  // İletişime Git (YENİ)
   const handleContactClick = () => {
     onClose();
     setTimeout(() => onScrollToContact(), 300);
   };
 
   const handleOpenPdf = (url: string, title: string) => {
-    // URL'in PDF olup olmadığını kontrol edelim
-    // Eğer PDF değilse (örn: OBS sitesi) yine tarayıcıda açmak daha sağlıklı olabilir
-    // Ama biz şimdilik hepsini uygulama içinde açalım.
     setPdfUrl(url);
     setPdfTitle(title);
     setPdfVisible(true);
@@ -60,76 +55,120 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
           <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
             <View className="flex-1 p-6">
               
+              {/* Header */}
               <View className="flex-row justify-between items-center mb-8">
-                <Text className="text-2xl font-bold text-blue-900">Menü</Text>
+                {/* DİNAMİK: Menü */}
+                <Text className="text-2xl font-bold text-blue-900">{dictionary.menu}</Text>
                 <TouchableOpacity onPress={onClose} className="p-2 bg-gray-100 rounded-full">
                   <X color="#374151" size={24} />
                 </TouchableOpacity>
               </View>
 
+              {/* Profil */}
               <View className="flex-row items-center mb-8 p-3 bg-blue-50 rounded-xl border border-blue-100">
                 <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center"><Text className="text-white font-bold">Ö</Text></View>
-                <View className="ml-3"><Text className="font-bold text-gray-900">Öğrenci Girişi</Text><Text className="text-xs text-blue-600">Giriş Yapılmadı</Text></View>
+                <View className="ml-3">
+                    {/* DİNAMİK: Öğrenci Girişi */}
+                    <Text className="font-bold text-gray-900">{dictionary.studentLogin}</Text>
+                    {/* DİNAMİK: Giriş Yapılmadı */}
+                    <Text className="text-xs text-blue-600">{dictionary.notLoggedIn}</Text>
+                </View>
               </View>
 
-              <View className="flex-row justify-center mb-6 space-x-4 bg-gray-50 p-2 rounded-xl">
-              <TouchableOpacity 
-                onPress={() => setLanguage('tr')}
-                className={`px-4 py-2 rounded-lg ${language === 'tr' ? 'bg-white shadow-sm' : ''}`}
-              >
-                <Text className={`font-bold ${language === 'tr' ? 'text-blue-600' : 'text-gray-400'}`}>🇹🇷 TR</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                onPress={() => setLanguage('en')}
-                className={`px-4 py-2 rounded-lg ${language === 'en' ? 'bg-white shadow-sm' : ''}`}
-              >
-                <Text className={`font-bold ${language === 'en' ? 'text-blue-600' : 'text-gray-400'}`}>🇬🇧 EN</Text>
-              </TouchableOpacity>
-            </View>
+              {/* --- MODERN DİL SEÇİMİ (SEGMENTED CONTROL) --- */}
+              <View className="flex-row bg-slate-100 p-1.5 rounded-2xl mb-8 border border-slate-200">
+                
+                {/* TR Butonu */}
+                <TouchableOpacity 
+                  onPress={() => setLanguage('tr')}
+                  activeOpacity={0.9} // Tıklayınca çok sönmesin
+                  className={`flex-1 flex-row items-center justify-center py-3 rounded-xl transition-all ${
+                    language === 'tr' 
+                      ? 'bg-white shadow-sm border border-slate-100' // Aktif: Beyaz Kart
+                      : 'bg-transparent' // Pasif: Şeffaf
+                  }`}
+                >
+                  <Text className="text-base mr-2">🇹🇷</Text>
+                  <Text className={`text-sm font-extrabold ${
+                    language === 'tr' ? 'text-slate-900' : 'text-slate-400'
+                  }`}>
+                    Türkçe
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* EN Butonu */}
+                <TouchableOpacity 
+                  onPress={() => setLanguage('en')}
+                  activeOpacity={0.9}
+                  className={`flex-1 flex-row items-center justify-center py-3 rounded-xl transition-all ${
+                    language === 'en' 
+                      ? 'bg-white shadow-sm border border-slate-100' 
+                      : 'bg-transparent'
+                  }`}
+                >
+                  <Text className="text-base mr-2">🇬🇧</Text>
+                  <Text className={`text-sm font-extrabold ${
+                    language === 'en' ? 'text-slate-900' : 'text-slate-400'
+                  }`}>
+                    English
+                  </Text>
+                </TouchableOpacity>
+
+              </View>
 
               <View className="gap-2">
-                <MenuLink icon={<User size={20} />} title="ÜBYS" />
+                <TouchableOpacity onPress={() => handleOpenPdf("https://ubys.kastamonu.edu.tr/", dictionary.ubys)} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
+                   <View className="opacity-60 text-gray-700"><User size={20} /></View>
+                   <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.ubys}</Text>
+                   <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+                </TouchableOpacity>
                 
+                {/* 2. YEMEK LİSTESİ */}
                 <TouchableOpacity onPress={handleDiningClick} className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100">
                     <View className="opacity-60 text-gray-700"><Utensils size={20} /></View>
-                    <Text className="ml-3 font-semibold text-gray-700 text-base">Yemek Listesi</Text>
+                    {/* DİNAMİK: Günün Menüsü */}
+                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.dining}</Text>
                     <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
 
                 
+                {/* 4. AKADEMİK TAKVİM */}
                 <View>
                   <TouchableOpacity onPress={() => setCalendarOpen(!isCalendarOpen)} className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isCalendarOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}>
                     <View className={`${isCalendarOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}><Calendar size={20} color={isCalendarOpen ? "#2563eb" : "#374151"} /></View>
-                    <Text className={`ml-3 font-semibold text-base ${isCalendarOpen ? "text-blue-700" : "text-gray-700"}`}>Akademik Takvim</Text>
+                    {/* DİNAMİK: Akademik Takvim */}
+                    <Text className={`ml-3 font-semibold text-base ${isCalendarOpen ? "text-blue-700" : "text-gray-700"}`}>{dictionary.academicCalendar}</Text>
                     {isCalendarOpen ? <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />}
                   </TouchableOpacity>
 
+                  {/* ALT MENÜLER */}
                   {isCalendarOpen && (
                     <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
                       <SubMenuLink 
-                        title="Genel Takvim" 
-                        onPress={() => handleOpenPdf(PDF_LINKS.GENEL, "Genel Akademik Takvim")} 
+                        title={dictionary.calendarGeneral} // DİNAMİK
+                        onPress={() => handleOpenPdf(PDF_LINKS.GENEL, dictionary.calendarGeneral)} 
                       />
                       <SubMenuLink 
-                        title="Academic Calendar (EN)" 
+                        title={dictionary.calendarEn} // DİNAMİK
                         onPress={() => handleOpenPdf(PDF_LINKS.ACADEMİC_Calendar_EN, "Academic Calendar")} 
                       />
                       <SubMenuLink 
-                        title="Tıp Fakültesi" 
-                        onPress={() => handleOpenPdf(PDF_LINKS.TIP, "Tıp Fak. Takvimi")} 
+                        title={dictionary.calendarMedicine} // DİNAMİK
+                        onPress={() => handleOpenPdf(PDF_LINKS.TIP, dictionary.calendarMedicine)} 
                       />
                       <SubMenuLink 
-                        title="Veteriner Fakültesi" 
-                        onPress={() => handleOpenPdf(PDF_LINKS.VETERINER, "Veteriner Fak. Takvimi")} 
+                        title={dictionary.calendarVet} // DİNAMİK
+                        onPress={() => handleOpenPdf(PDF_LINKS.VETERINER, dictionary.calendarVet)} 
                       />
                     </View>
                   )}
                 </View>
 
+                {/* 5. İLETİŞİM */}
                 <TouchableOpacity onPress={handleContactClick} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
                     <View className="opacity-60 text-gray-700"><Phone size={20} /></View>
-                    <Text className="ml-3 font-semibold text-gray-700 text-base">İletişim & Rehber</Text>
+                    {/* DİNAMİK: İletişim & Rehber */}
+                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.contactGuide}</Text>
                     <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
 
@@ -138,7 +177,8 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
               <View className="mt-auto border-t border-gray-100 pt-6 pb-6">
                 <TouchableOpacity className="flex-row items-center p-3 rounded-xl bg-red-50">
                   <LogOut size={20} color="#dc2626" />
-                  <Text className="ml-3 font-bold text-red-600">Çıkış Yap</Text>
+                  {/* DİNAMİK: Çıkış Yap */}
+                  <Text className="ml-3 font-bold text-red-600">{dictionary.logout}</Text>
                 </TouchableOpacity>
                 <Text className="text-center text-xs text-gray-400 mt-4">v1.0.0 - Kampüs App</Text>
               </View>

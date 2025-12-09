@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Image, LayoutChangeEvent } from 'react-native';
 import { Utensils, Info, Flame } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react'; 
+import { useLanguage } from '../context/LanguageContext'; // <-- HOOK
 
 export interface YemekhaneItem {
   yemekhaneId: number;
@@ -18,35 +19,28 @@ interface DiningListProps {
   onLayout: (event: LayoutChangeEvent) => void;
 }
 
-
 const CARD_WIDTH = 320; 
 const SPACING = 20;     
 const SNAP_INTERVAL = CARD_WIDTH + SPACING; 
 
 export const DiningList = ({ data, onLayout }: DiningListProps) => {
-
-  // --- OTOMATİK KAYDIRMA MANTIĞI ---
+  const { dictionary } = useLanguage(); // <-- DİL
   const scrollRef = useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // ... (Otomatik kaydırma useEffect kodu aynı) ...
   useEffect(() => {
     if (data.length === 0) return;
-
     const interval = setInterval(() => {
       let nextIndex = currentIndex + 1;
-
-      
       if (nextIndex >= data.length) {
         nextIndex = 0;
         scrollRef.current?.scrollTo({ x: 0, animated: true });
       } else {
-      
         scrollRef.current?.scrollTo({ x: nextIndex * SNAP_INTERVAL, animated: true });
       }
-      
       setCurrentIndex(nextIndex);
     }, 4000); 
-
     return () => clearInterval(interval);
   }, [currentIndex, data.length]);
   
@@ -54,10 +48,8 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
   const parseFood = (foodString: string) => {
     if (!foodString) return { name: "", cal: "" };
     const parts = foodString.split(/[\t\n-]+|\s{2,}/);
-    
     let name = parts[0]?.trim() || "";
     let cal = parts[1]?.trim() || "";
-
     if (!cal && name.includes("KKAL")) {
        const match = name.match(/(\d+)\s*KKAL/i);
        if (match) {
@@ -77,12 +69,12 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
           <Utensils color="#ea580c" size={20} />
         </View>
         <View>
-          <Text className="text-xl font-extrabold text-slate-900">Günün Menüsü</Text>
-          <Text className="text-orange-600 font-bold text-xs uppercase tracking-widest">Afiyet Olsun</Text>
+          {/* CANLI YAZILAR */}
+          <Text className="text-xl font-extrabold text-slate-900">{dictionary.dining}</Text>
+          <Text className="text-orange-600 font-bold text-xs uppercase tracking-widest">{dictionary.bonAppetit}</Text>
         </View>
       </View>
       
-      {/* YATAY LİSTE (Otomatik Slider) */}
       <ScrollView 
         ref={scrollRef} 
         horizontal 
@@ -97,7 +89,6 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
             className="mr-5 w-80 h-96 bg-white rounded-3xl border border-slate-100 shadow-md overflow-hidden flex-col"
           >
             
-            {/* 1. RESİM */}
             <View className="h-36 relative">
               <Image 
                 source={{ uri: yemek.path }} 
@@ -113,7 +104,6 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
               </View>
             </View>
 
-            {/* 2. YEMEK LİSTESİ */}
             <View className="p-5 gap-3 flex-1 justify-center">
               {[yemek.yemek1TR, yemek.yemek2TR, yemek.yemek3TR, yemek.yemek4TR].map((item, index) => {
                 if(!item) return null;
@@ -140,7 +130,6 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
               })}
             </View>
 
-            {/* 3. FOOTER */}
             <View className="bg-slate-50 p-3 border-t border-slate-100 flex-row items-center h-14">
               <Info size={14} color="#64748b" />
               <Text 

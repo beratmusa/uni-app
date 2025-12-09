@@ -7,10 +7,11 @@ import { useLanguage } from '../context/LanguageContext';
 export interface GundemItem { 
   id: number; 
   baslikTR: string; 
-  baslikEN: string; 
+  baslikEN?: string; // Var olan
   path: string; 
   eklemeZamani: string; 
   icerikTR?: string; 
+  icerikEN?: string; // <-- YENİ EKLENDİ: İngilizce içerik desteği
 }
 
 interface AgendaListProps {
@@ -20,54 +21,47 @@ interface AgendaListProps {
 
 export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
   const { language, dictionary } = useLanguage();
+
   const getDay = (dateString: string) => {
     const date = new Date(dateString);
     return date.getDate();
   };
 
+  // --- TARİH DÜZELTMESİ ---
   const getMonth = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', { month: 'short' }).toUpperCase();
+    // Dil TR ise Türkçe, değilse İngilizce ay ismi döndür
+    return date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { month: 'short' }).toUpperCase();
   };
 
   return (
     <View className="mt-0 py-12 bg-slate-50 relative border-b border-slate-200 overflow-hidden">
       
-      {/* SOL DİKEY GRADYAN ÇİZGİ */}
       <LinearGradient
         colors={['#0f172a', '#1e3a8a', '#3b82f6']} 
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }} 
         style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 18, 
-          borderTopRightRadius: 30,
-          borderBottomRightRadius: 30
+          position: 'absolute', left: 0, top: 0, bottom: 0, width: 18, 
+          borderTopRightRadius: 30, borderBottomRightRadius: 30
         }}
       />
 
-      {/* --- BAŞLIK ALANI --- */}
       <View className="px-8 mb-8 flex-row justify-between items-end">
         <View>
-          {/* Üst Başlık (Öne Çıkanlar) */}
           <View className="flex-row items-center mb-1">
             <Sparkles size={14} color="#2563eb" /> 
             <Text className="text-blue-700 font-bold text-xs uppercase tracking-widest ml-1">{dictionary.featured}</Text>
           </View>
           
-          
           <MaskedView
-            style={{ height: 45, width: 200 }} // Yazının sığacağı kadar alan
+            style={{ height: 45, width: 200 }} 
             maskElement={
               <Text className="text-4xl font-black tracking-tighter bg-transparent">
                 {dictionary.agenda}
               </Text>
             }
           >
-            
             <LinearGradient
               colors={['#0f172a', '#1e3a8a', '#3b82f6']}
               start={{ x: 0, y: 0 }}
@@ -75,8 +69,6 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
               style={{ flex: 1 }}
             />
           </MaskedView>
-          {/* ----------------------------------------- */}
-
         </View>
         
         <TouchableOpacity className="bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
@@ -84,7 +76,6 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
         </TouchableOpacity>
       </View>
 
-      {/* --- LİSTE --- */}
       <View className="px-5 gap-8">
         {data.map((item) => (
           <TouchableOpacity 
@@ -107,14 +98,12 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
                   {getDay(item.eklemeZamani)}
                 </Text>
                 <Text className="text-[11px] font-extrabold text-blue-700 uppercase tracking-wider">
-                  {getMonth(item.eklemeZamani)}
+                  {getMonth(item.eklemeZamani)} {/* ARTIK DİNAMİK */}
                 </Text>
               </View>
             </View>
 
             <View className="p-6">
-              
-
               <Text className="text-slate-900 font-extrabold text-xl leading-7 mb-5">
                 {language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR)}
               </Text>
