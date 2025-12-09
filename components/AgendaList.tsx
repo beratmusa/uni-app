@@ -1,11 +1,13 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { ArrowRight, Clock, Sparkles } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import MaskedView from '@react-native-masked-view/masked-view'; // <-- YENİ EKLENDİ
+import MaskedView from '@react-native-masked-view/masked-view'; 
+import { useLanguage } from '../context/LanguageContext';
 
 export interface GundemItem { 
   id: number; 
   baslikTR: string; 
+  baslikEN: string; 
   path: string; 
   eklemeZamani: string; 
   icerikTR?: string; 
@@ -17,7 +19,7 @@ interface AgendaListProps {
 }
 
 export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
-  
+  const { language, dictionary } = useLanguage();
   const getDay = (dateString: string) => {
     const date = new Date(dateString);
     return date.getDate();
@@ -53,7 +55,7 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
           {/* Üst Başlık (Öne Çıkanlar) */}
           <View className="flex-row items-center mb-1">
             <Sparkles size={14} color="#2563eb" /> 
-            <Text className="text-blue-700 font-bold text-xs uppercase tracking-widest ml-1">Öne Çıkanlar</Text>
+            <Text className="text-blue-700 font-bold text-xs uppercase tracking-widest ml-1">{dictionary.featured}</Text>
           </View>
           
           
@@ -61,7 +63,7 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
             style={{ height: 45, width: 200 }} // Yazının sığacağı kadar alan
             maskElement={
               <Text className="text-4xl font-black tracking-tighter bg-transparent">
-                Gündem
+                {dictionary.agenda}
               </Text>
             }
           >
@@ -69,7 +71,7 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
             <LinearGradient
               colors={['#0f172a', '#1e3a8a', '#3b82f6']}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }} // Soldan sağa renk geçişi
+              end={{ x: 1, y: 0 }}
               style={{ flex: 1 }}
             />
           </MaskedView>
@@ -78,7 +80,7 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
         </View>
         
         <TouchableOpacity className="bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
-          <Text className="text-slate-700 text-xs font-bold">Tümünü Gör</Text>
+          <Text className="text-slate-700 text-xs font-bold">{dictionary.seeAll}</Text>
         </TouchableOpacity>
       </View>
 
@@ -111,19 +113,14 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
             </View>
 
             <View className="p-6">
-              <View className="flex-row items-center mb-3">
-                <Clock size={14} color="#94a3b8" />
-                <Text className="text-slate-500 text-sm font-semibold ml-1.5">
-                  Kastamonu Üniversitesi
-                </Text>
-              </View>
+              
 
               <Text className="text-slate-900 font-extrabold text-xl leading-7 mb-5">
-                {item.baslikTR}
+                {language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR)}
               </Text>
 
               <View className="flex-row items-center justify-between border-t border-slate-100 pt-4">
-                <Text className="text-slate-500 text-sm font-medium">Detayları incele</Text>
+                <Text className="text-slate-500 text-sm font-medium">{dictionary.readMore}</Text>
                 <View className="bg-slate-900 p-2.5 rounded-full">
                   <ArrowRight size={18} color="white" />
                 </View>

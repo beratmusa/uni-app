@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Linking } from 'react-native';
 import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
+import { useLanguage } from '../context/LanguageContext';
 
 import { PdfModal } from './PdfModal';
 
@@ -20,6 +21,7 @@ interface SideMenuProps {
 }
 
 export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideMenuProps) => {
+  const { language, setLanguage, dictionary } = useLanguage();
   const [isCalendarOpen, setCalendarOpen] = useState(false);
 
   const [pdfVisible, setPdfVisible] = useState(false);
@@ -69,6 +71,22 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                 <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center"><Text className="text-white font-bold">Ö</Text></View>
                 <View className="ml-3"><Text className="font-bold text-gray-900">Öğrenci Girişi</Text><Text className="text-xs text-blue-600">Giriş Yapılmadı</Text></View>
               </View>
+
+              <View className="flex-row justify-center mb-6 space-x-4 bg-gray-50 p-2 rounded-xl">
+              <TouchableOpacity 
+                onPress={() => setLanguage('tr')}
+                className={`px-4 py-2 rounded-lg ${language === 'tr' ? 'bg-white shadow-sm' : ''}`}
+              >
+                <Text className={`font-bold ${language === 'tr' ? 'text-blue-600' : 'text-gray-400'}`}>🇹🇷 TR</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={() => setLanguage('en')}
+                className={`px-4 py-2 rounded-lg ${language === 'en' ? 'bg-white shadow-sm' : ''}`}
+              >
+                <Text className={`font-bold ${language === 'en' ? 'text-blue-600' : 'text-gray-400'}`}>🇬🇧 EN</Text>
+              </TouchableOpacity>
+            </View>
 
               <View className="gap-2">
                 <MenuLink icon={<User size={20} />} title="ÜBYS" />
