@@ -57,7 +57,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
               
               {/* Header */}
               <View className="flex-row justify-between items-center mb-8">
-                {/* DİNAMİK: Menü */}
                 <Text className="text-2xl font-bold text-blue-900">{dictionary.menu}</Text>
                 <TouchableOpacity onPress={onClose} className="p-2 bg-gray-100 rounded-full">
                   <X color="#374151" size={24} />
@@ -68,9 +67,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
               <View className="flex-row items-center mb-8 p-3 bg-blue-50 rounded-xl border border-blue-100">
                 <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center"><Text className="text-white font-bold">Ö</Text></View>
                 <View className="ml-3">
-                    {/* DİNAMİK: Öğrenci Girişi */}
                     <Text className="font-bold text-gray-900">{dictionary.studentLogin}</Text>
-                    {/* DİNAMİK: Giriş Yapılmadı */}
                     <Text className="text-xs text-blue-600">{dictionary.notLoggedIn}</Text>
                 </View>
               </View>
@@ -78,14 +75,13 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
               {/* --- MODERN DİL SEÇİMİ (SEGMENTED CONTROL) --- */}
               <View className="flex-row bg-slate-100 p-1.5 rounded-2xl mb-8 border border-slate-200">
                 
-                {/* TR Butonu */}
                 <TouchableOpacity 
                   onPress={() => setLanguage('tr')}
-                  activeOpacity={0.9} // Tıklayınca çok sönmesin
+                  activeOpacity={0.9}
                   className={`flex-1 flex-row items-center justify-center py-3 rounded-xl transition-all ${
                     language === 'tr' 
-                      ? 'bg-white shadow-sm border border-slate-100' // Aktif: Beyaz Kart
-                      : 'bg-transparent' // Pasif: Şeffaf
+                      ? 'bg-white shadow-sm border border-slate-100' 
+                      : 'bg-transparent'
                   }`}
                 >
                   <Text className="text-base mr-2">🇹🇷</Text>
@@ -96,7 +92,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   </Text>
                 </TouchableOpacity>
                 
-                {/* EN Butonu */}
                 <TouchableOpacity 
                   onPress={() => setLanguage('en')}
                   activeOpacity={0.9}
@@ -126,7 +121,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                 {/* 2. YEMEK LİSTESİ */}
                 <TouchableOpacity onPress={handleDiningClick} className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100">
                     <View className="opacity-60 text-gray-700"><Utensils size={20} /></View>
-                    {/* DİNAMİK: Günün Menüsü */}
                     <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.dining}</Text>
                     <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
@@ -136,7 +130,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                 <View>
                   <TouchableOpacity onPress={() => setCalendarOpen(!isCalendarOpen)} className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isCalendarOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}>
                     <View className={`${isCalendarOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}><Calendar size={20} color={isCalendarOpen ? "#2563eb" : "#374151"} /></View>
-                    {/* DİNAMİK: Akademik Takvim */}
                     <Text className={`ml-3 font-semibold text-base ${isCalendarOpen ? "text-blue-700" : "text-gray-700"}`}>{dictionary.academicCalendar}</Text>
                     {isCalendarOpen ? <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />}
                   </TouchableOpacity>
@@ -177,7 +170,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
               <View className="mt-auto border-t border-gray-100 pt-6 pb-6">
                 <TouchableOpacity className="flex-row items-center p-3 rounded-xl bg-red-50">
                   <LogOut size={20} color="#dc2626" />
-                  {/* DİNAMİK: Çıkış Yap */}
                   <Text className="ml-3 font-bold text-red-600">{dictionary.logout}</Text>
                 </TouchableOpacity>
                 <Text className="text-center text-xs text-gray-400 mt-4">v1.0.0 - Kampüs App</Text>
