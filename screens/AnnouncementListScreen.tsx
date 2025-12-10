@@ -3,11 +3,17 @@ import { ActivityIndicator, View } from 'react-native';
 import { AllItemsPage, GenericItem } from '../components/AllItemsPage';
 import { useLanguage } from '../context/LanguageContext';
 import { HaberItem } from '../components/AnnouncementList';
+// EKLENEN IMPORTLAR:
+import { DetailModal, DetailData } from '../components/DetailModal';
 
 export const AnnouncementListScreen = ({ navigation }: any) => {
   const { language, dictionary } = useLanguage();
   const [data, setData] = useState<GenericItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // MODAL STATE'LERİ
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<DetailData | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -15,22 +21,15 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
 
   const fetchData = async () => {
     try {
-      // Yine ana API'den çekiyoruz. İleride sadece duyuru için özel endpoint varsa onu kullanabilirsin.
-      const response = await fetch('https://testapi.kastamonu.edu.tr/api/main');
+      const response = await fetch('https://testapi.kastamonu.edu.tr/api/haberduyuru');
       const json = await response.json();
-      
-      const rawData: HaberItem[] = json.haber?.data || [];
+      const rawData: HaberItem[] = json.data || [];
 
-      // HaberItem -> GenericItem dönüşümü
       const formattedData: GenericItem[] = rawData.map(item => ({
         id: item.id,
-        // Dile göre başlık seçimi
         title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
-        // Tarih formatlama
         date: new Date(item.baslamaZamani).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
-        // Duyurularda genelde resim olmaz ama varsa kullanır
         image: item.haberDuyuruFoto, 
-        // Kategori ismi (Örn: "Birim Haberleri")
         category: item.kategori, 
         originalData: item
       }));
@@ -43,6 +42,23 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
     }
   };
 
+  // TIKLAMA OLAYI
+  const handleItemPress = (item: GenericItem) => {
+    const rawItem = item.originalData as HaberItem;
+
+    setSelectedItem({
+        title: item.title,
+        date: item.date,
+        // İçerik yoksa boş string dönmesin diye kontrol
+        content: language === 'tr' 
+          ? (rawItem.icerikTR || "İçerik bulunamadı.") 
+          : (rawItem.icerikEN || rawItem.icerikTR || "Content not available."),
+        image: null, // Duyuru detayında genelde büyük resim olmaz, varsa item.image kullanabilirsin
+        category: item.category
+    });
+    setModalVisible(true);
+  };
+
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-slate-50">
@@ -52,14 +68,20 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
   }
 
   return (
-    <AllItemsPage
-      title={dictionary.announcements} // "Duyurular"
-      type="announcement"              // <-- ÖNEMLİ: Duyuru modunu seçtik (Megafon ikonu vb.)
-      data={data}
-      onItemPress={(item) => {
-        console.log("Tıklanan Duyuru:", item.title);
-        // İleride detay sayfasına yönlendirme buraya eklenecek
-      }}
-    />
+    <>
+      <AllItemsPage
+        title={dictionary.announcements}
+        type="announcement"
+        data={data}
+        onItemPress={handleItemPress}
+      />
+
+      {/* MODAL EKLENDİ */}
+      <DetailModal 
+        visible={modalVisible}
+        data={selectedItem}
+        onClose={() => setModalVisible(false)}
+      />
+    </>
   );
 };

@@ -75,12 +75,6 @@ export const Footer = ({ onLayout }: FooterProps) => {
         </TouchableOpacity>
       </View>
 
-      <View className="flex-row gap-4 mb-8 border-t border-red-900 pt-6">
-        <SocialIcon icon={<X size={20} color="white" />} /> 
-        <SocialIcon icon={<Facebook size={20} color="white" />} />
-        <SocialIcon icon={<Instagram size={20} color="white" />} />
-        <SocialIcon icon={<Linkedin size={20} color="white" />} />
-      </View>
 
       <View className="items-center">
         <Text className="text-gray-500 text-xs text-center">
@@ -95,8 +89,3 @@ export const Footer = ({ onLayout }: FooterProps) => {
   );
 };
 
-const SocialIcon = ({ icon }: { icon: any }) => (
-  <TouchableOpacity className="bg-red-800 p-3 rounded-full active:bg-red-700">
-    {icon}
-  </TouchableOpacity>
-);

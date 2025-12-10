@@ -3,11 +3,17 @@ import { ActivityIndicator, View } from 'react-native';
 import { AllItemsPage, GenericItem } from '../components/AllItemsPage';
 import { useLanguage } from '../context/LanguageContext';
 import { EtkinlikItem } from '../components/EventList';
+// EKLENEN IMPORTLAR:
+import { DetailModal, DetailData } from '../components/DetailModal';
 
 export const EventListScreen = ({ navigation }: any) => {
   const { language, dictionary } = useLanguage();
   const [data, setData] = useState<GenericItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // MODAL STATE'LERİ
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<DetailData | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -15,21 +21,15 @@ export const EventListScreen = ({ navigation }: any) => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('https://testapi.kastamonu.edu.tr/api/main');
+      const response = await fetch('https://testapi.kastamonu.edu.tr/api/etkinlik');
       const json = await response.json();
-      
-      const rawData: EtkinlikItem[] = json.etkinlik?.data || [];
+      const rawData: EtkinlikItem[] = json.data || []; 
 
-      // Etkinlik verisini GenericItem formatına çeviriyoruz
       const formattedData: GenericItem[] = rawData.map(item => ({
         id: item.id,
-        // Dile göre başlık
         title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
-        // Tarih formatlama
         date: new Date(item.baslamaZamani).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
-        // Etkinlik görseli
         image: item.pathTR, 
-        // Kategori (Sabit: Etkinlik)
         category: dictionary.events, 
         originalData: item
       }));
@@ -42,6 +42,21 @@ export const EventListScreen = ({ navigation }: any) => {
     }
   };
 
+  // TIKLAMA OLAYI
+  const handleItemPress = (item: GenericItem) => {
+    const rawItem = item.originalData as EtkinlikItem;
+
+    setSelectedItem({
+        title: item.title,
+        date: item.date,
+        content: rawItem.icerikTR, // Etkinlik içeriği genelde HTML olabilir
+        image: item.image,
+        location: rawItem.yerTR, // Etkinlikte konum bilgisi de var
+        category: dictionary.events
+    });
+    setModalVisible(true);
+  };
+
   if (loading) {
     return (
       <View className="flex-1 justify-center items-center bg-slate-50">
@@ -51,14 +66,20 @@ export const EventListScreen = ({ navigation }: any) => {
   }
 
   return (
-    <AllItemsPage
-      title={dictionary.events} // "Etkinlik Takvimi"
-      type="event"              // <-- ÖNEMLİ: Etkinlik modunu seçtik (Takvim yaprağı görünümü)
-      data={data}
-      onItemPress={(item) => {
-        console.log("Tıklanan Etkinlik:", item.title);
-        // İleride detay sayfasına/modalına yönlendirme buraya eklenecek
-      }}
-    />
+    <>
+      <AllItemsPage
+        title={dictionary.events}
+        type="event"
+        data={data}
+        onItemPress={handleItemPress}
+      />
+
+      {/* MODAL EKLENDİ */}
+      <DetailModal 
+        visible={modalVisible}
+        data={selectedItem}
+        onClose={() => setModalVisible(false)}
+      />
+    </>
   );
 };
