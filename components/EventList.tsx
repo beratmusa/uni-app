@@ -1,7 +1,8 @@
 import { View, Text, ScrollView, Image, TouchableOpacity, ImageBackground } from 'react-native';
 import { MapPin, Clock } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { useLanguage } from '../context/LanguageContext'; // <-- HOOK
+import { useLanguage } from '../context/LanguageContext';
+import { useNavigation } from '@react-navigation/native';
 
 export interface EtkinlikItem {
   id: number;
@@ -27,6 +28,7 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
   const { language, dictionary } = useLanguage(); // <-- DİL
   const scrollRef = useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const navigation = useNavigation<any>();
 
   // ... (Otomatik kaydırma useEffect kodu aynı kalacak) ...
   useEffect(() => {
@@ -77,10 +79,20 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
       style={{ backgroundColor: '#e5e5e5' }}
     >
       <View className="px-4">
-        {/* Header Başlık (Opsiyonel olarak buraya da ekleyebilirsiniz) */}
-        <Text className="text-stone-500 font-bold text-xs uppercase tracking-widest mb-4 ml-1">
-            {dictionary.campusLife}
-        </Text>
+        <View className="flex-row justify-between items-center mb-4 ml-1">
+            <Text className="text-stone-500 font-bold text-xs uppercase tracking-widest">
+                {dictionary.campusLife}
+            </Text>
+
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('EventList')} // Yönlendirme
+              className="bg-white/80 px-3 py-1.5 rounded-full border border-stone-300 shadow-sm"
+            >
+              <Text className="text-stone-600 text-[10px] font-bold">
+                {dictionary.seeAll}
+              </Text>
+            </TouchableOpacity>
+        </View>
 
         <View className="relative">
           {/* Çivi */}

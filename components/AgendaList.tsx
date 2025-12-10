@@ -3,6 +3,7 @@ import { ArrowRight, Clock, Sparkles } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-masked-view/masked-view'; 
 import { useLanguage } from '../context/LanguageContext';
+import { useNavigation } from '@react-navigation/native';
 
 export interface GundemItem { 
   id: number; 
@@ -22,6 +23,7 @@ interface AgendaListProps {
 
 export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
   const { language, dictionary } = useLanguage();
+  const navigation = useNavigation<any>();
 
   const getDay = (dateString: string) => {
     const date = new Date(dateString);
@@ -72,7 +74,10 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
           </MaskedView>
         </View>
         
-        <TouchableOpacity className="bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('AgendaList')} // <-- Yönlendirme eklendi
+          className="bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm"
+        >
           <Text className="text-slate-700 text-xs font-bold">{dictionary.seeAll}</Text>
         </TouchableOpacity>
       </View>

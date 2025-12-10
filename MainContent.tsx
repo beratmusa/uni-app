@@ -177,7 +177,7 @@ export default function MainContent() {
   return (
       <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'left', 'right']}>
         
-        {/* --- NAVBAR (DİNAMİK + LOGOLU + KIRMIZI ÇİZGİLİ) --- */}
+        {/* --- NAVBAR --- */}
         <View className="flex-row justify-between items-center px-5 py-6 bg-white shadow-sm z-50 border-b border-slate-100">
           
           <View className="flex-row items-center gap-3">

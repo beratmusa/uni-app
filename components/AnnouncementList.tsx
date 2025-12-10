@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Calendar, ChevronRight, Bell, Filter } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLanguage } from '../context/LanguageContext';
+import { useNavigation } from '@react-navigation/native';
 
 export interface HaberItem { 
   id: number; 
@@ -83,6 +84,7 @@ const DEFAULT_THEME = CATEGORY_THEMES["Üniversite Haberleri"];
 
 export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) => {
   const { language, dictionary } = useLanguage();
+  const navigation = useNavigation<any>();
   
   // Başlangıç kategorisi
   const [selectedCategory, setSelectedCategory] = useState("Üniversite Haberleri");
@@ -143,7 +145,7 @@ export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) =
           </View>
 
           <TouchableOpacity 
-            onPress={() => setSelectedCategory("Tümü")}
+            onPress={() => navigation.navigate('AnnouncementList')} // <-- Yönlendirme
             className={`px-3 py-1.5 rounded-full border ${
               selectedCategory === "Tümü" 
                 ? "bg-slate-800 border-slate-800" 
@@ -153,7 +155,7 @@ export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) =
             <Text className={`text-xs font-bold ${
               selectedCategory === "Tümü" ? "text-white" : "text-slate-600"
             }`}>
-              {dictionary.categories.all}
+              {dictionary.seeAll || "Tümü"} 
             </Text>
           </TouchableOpacity>
         </View>

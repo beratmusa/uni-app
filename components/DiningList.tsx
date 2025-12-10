@@ -38,7 +38,6 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
     data.find(item => item.yemekhaneId === selectedId) || data[0], 
   [data, selectedId]);
 
-  // Kalori ayrıştırma fonksiyonu
   const parseFood = (foodString: string | undefined) => {
     if (!foodString) return { name: "", cal: "" };
     const parts = foodString.split(/[\t\n-]+|\s{2,}/);
@@ -54,7 +53,6 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
     return { name, cal };
   };
 
-  // Listeyi useMemo ile hafızaya alıyoruz (Performans artışı için)
   const foodItems = useMemo(() => {
     return language === 'tr' 
     ? [selectedItem?.yemek1TR, selectedItem?.yemek2TR, selectedItem?.yemek3TR, selectedItem?.yemek4TR]
@@ -69,13 +67,14 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
   if (!data || data.length === 0) return null;
 
   return (
-    <View className="flex-1 bg-white" onLayout={onLayout}>
+    // Üstten boşluk (mt-8) korundu
+    <View className="flex-1 bg-white mt-8" onLayout={onLayout}>
       
       {/* 1. ÜST KISIM (TAB) */}
       <View className="flex-row h-[70px]">
-        {/* Z-Index kaldırıldı, düz mantık */}
-        <View className="w-[60%] bg-orange-600 rounded-tr-[30px] justify-center pl-6">
-            <Text className="text-white text-xl font-bold tracking-wider">
+        {/* Genişlik (w-[45%]) korundu */}
+        <View className="w-[45%] bg-orange-600 rounded-tr-[30px] justify-center pl-6">
+            <Text className="text-white text-xl font-bold tracking-wider" numberOfLines={1}>
               {dictionary.dining || "Günün Menüsü"}
             </Text>
             <Text className="text-orange-200 text-xs font-medium uppercase tracking-widest">
@@ -90,7 +89,7 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
         {/* A. SOL SÜTUN */}
         <View className="w-[35%] bg-white relative">
             
-            {/* KIVRIM SÜSÜ (Tıklamayı engellememesi için pointerEvents="none") */}
+            {/* KIVRIM SÜSÜ */}
             <View 
                 pointerEvents="none" 
                 className="absolute top-0 right-0 w-full h-[30px] bg-orange-600"
@@ -102,7 +101,7 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
                 className="pt-10 px-2" 
                 contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
                 showsVerticalScrollIndicator={false}
-                removeClippedSubviews={true} // Görünmeyen elemanları render etme (Hızlandırır)
+                removeClippedSubviews={true}
             >
                 {data.map((item) => {
                     const isActive = selectedId === item.yemekhaneId;
@@ -111,7 +110,6 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
                             key={item.yemekhaneId}
                             onPress={() => setSelectedId(item.yemekhaneId)}
                             activeOpacity={0.7}
-                            // Shadow kaldırıldı, sadece border ve renk değişimi
                             className={`p-3 rounded-xl border ${
                                 isActive 
                                 ? "bg-orange-50 border-orange-200" 
@@ -132,7 +130,7 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
         {/* B. SAĞ İÇERİK */}
         <View className="flex-1 bg-orange-600 rounded-bl-[30px] p-5 pt-6 overflow-hidden">
             
-            {/* Süsleme: Parlama efekti (Basitleştirildi) */}
+            {/* Parlama efekti */}
             <View 
                 pointerEvents="none"
                 className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full" 
@@ -154,25 +152,24 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
                         if (!item) return null;
                         const { name, cal } = parseFood(item);
                         return (
-                            // DİKKAT: backdrop-blur kaldırıldı, sadece bg-white/10 kullanıldı.
                             <View 
                                 key={index} 
                                 className="bg-white/10 border border-white/20 p-3 rounded-2xl"
                             >
+                                {/* DEĞİŞİKLİK BURADA YAPILDI: Yan yana ve tire ile */}
                                 <Text className="text-white font-bold text-sm leading-5">
                                     {name}
+                                    {cal ? (
+                                        <Text className="text-white font-bold">
+                                           {" - " + cal}
+                                        </Text>
+                                    ) : null}
                                 </Text>
-                                {cal ? (
-                                    <Text className="text-orange-100 text-xs mt-1 font-medium">
-                                        🔥 {cal}
-                                    </Text>
-                                ) : null}
                             </View>
                         );
                     })}
                 </View>
 
-                
             </ScrollView>
         </View>
 

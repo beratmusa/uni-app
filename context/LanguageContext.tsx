@@ -6,7 +6,7 @@ const translations = {
   tr: {
     agenda: "Gündem",
     featured: "Öne Çıkanlar",
-    seeAll: "Tümü",
+    seeAll: "Tümünü Gör",
     announcements: "Duyurular",
     events: "Etkinlik Takvimi",
     campusLife: "Kampüste Hayat",
