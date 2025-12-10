@@ -4,8 +4,13 @@ import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import { Image } from 'react-native';
 
 import { PdfModal } from './PdfModal';
+
+const UBYS_BASE_URL = "https://ubys.kastamonu.edu.tr/Framework/Integration/Authenticater/Login?authToken=";
 
 const PDF_LINKS = {
   GENEL: "https://oidb.kastamonu.edu.tr/images/2025/dokumanlar/Akademik%20Takvim%201.pdf",
@@ -22,11 +27,18 @@ interface SideMenuProps {
 
 export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideMenuProps) => {
   const { language, setLanguage, dictionary } = useLanguage();
+  const { token,userInfo ,logout } = useAuth();
+  const navigation = useNavigation<any>();
   const [isCalendarOpen, setCalendarOpen] = useState(false);
 
   const [pdfVisible, setPdfVisible] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfTitle, setPdfTitle] = useState("");
+
+  // WebView (Modal) State'leri
+  const [webViewVisible, setWebViewVisible] = useState(false);
+  const [webViewUrl, setWebViewUrl] = useState<string | null>(null);
+  const [webViewTitle, setWebViewTitle] = useState("");
 
   const handleDiningClick = () => {
     onClose(); 
@@ -42,6 +54,27 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
     setPdfUrl(url);
     setPdfTitle(title);
     setPdfVisible(true);
+  };
+
+  const handleOpenWeb = (url: string, title: string) => {
+    setWebViewUrl(url);
+    setWebViewTitle(title);
+    setWebViewVisible(true);
+  };
+
+  const handleUbysClick = () => {
+    if (token) {
+      // 1. Token VARSA: Linki oluştur ve WebView'da aç
+      // Link: .../Login?authToken=YAKALANAN_TOKEN
+      const targetUrl = `${UBYS_BASE_URL}${token}`;
+      console.log("UBYS Açılıyor:", targetUrl);
+      
+      handleOpenWeb(targetUrl, dictionary.login);
+    } else {
+      // 2. Token YOKSA: Önce giriş yapması için Login ekranına gönder
+      onClose(); // Menüyü kapat
+      navigation.navigate('Login'); // LoginScreen (sorgu.kastamonu.edu.tr) açılır
+    }
   };
 
   return (
@@ -65,12 +98,42 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
               {/* Profil */}
               <View className="flex-row items-center mb-8 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <View className="w-10 h-10 bg-blue-600 rounded-full items-center justify-center"><Text className="text-white font-bold">Ö</Text></View>
-                <View className="ml-3">
-                    <Text className="font-bold text-gray-900">{dictionary.studentLogin}</Text>
-                    <Text className="text-xs text-blue-600">{dictionary.notLoggedIn}</Text>
-                </View>
-              </View>
+      
+      {/* PROFİL FOTOĞRAFI ALANI */}
+      <View className="w-12 h-12 bg-blue-600 rounded-full items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+          {token && userInfo?.Image ? (
+            <Image 
+              source={{ uri: `data:image/jpeg;base64,${userInfo.Image}` }} 
+              className="w-full h-full"
+              resizeMode="cover"
+            />
+          ) : (
+            <Text className="text-white font-bold text-lg">
+              {token && userInfo?.TitleNameSurname 
+                ? userInfo.TitleNameSurname.charAt(0).toUpperCase() 
+                : (token ? "✓" : "Ö") 
+              }
+            </Text>
+          )}
+      </View>
+
+      {/* İSİM VE DURUM ALANI */}
+      <View className="ml-3 flex-1">
+          <Text className="font-bold text-gray-900 text-sm" numberOfLines={1}>
+              {token && userInfo 
+                ? userInfo.TitleNameSurname // API'den gelen İsim Soyisim
+                : dictionary.studentLogin   // "Öğrenci Girişi"
+              }
+          </Text>
+          
+          <Text className="text-xs text-blue-600 font-medium">
+              {token 
+                ? (userInfo?.Email || (language === 'tr' ? "Oturum Açık" : "Session Active"))
+                : dictionary.notLoggedIn
+              }
+          </Text>
+      </View>
+    </View>
 
               {/* --- MODERN DİL SEÇİMİ (SEGMENTED CONTROL) --- */}
               <View className="flex-row bg-slate-100 p-1.5 rounded-2xl mb-8 border border-slate-200">
@@ -112,9 +175,9 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
               </View>
 
               <View className="gap-2">
-                <TouchableOpacity onPress={() => handleOpenPdf("https://ubys.kastamonu.edu.tr/", dictionary.ubys)} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
+                <TouchableOpacity onPress={handleUbysClick} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
                    <View className="opacity-60 text-gray-700"><User size={20} /></View>
-                   <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.ubys}</Text>
+                   <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.login}</Text>
                    <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
                 
@@ -167,13 +230,21 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
               </View>
 
-              <View className="mt-auto border-t border-gray-100 pt-6 pb-6">
-                <TouchableOpacity className="flex-row items-center p-3 rounded-xl bg-red-50">
-                  <LogOut size={20} color="#dc2626" />
-                  <Text className="ml-3 font-bold text-red-600">{dictionary.logout}</Text>
-                </TouchableOpacity>
+              {token && (
+        <View className="mt-auto border-t border-gray-100 pt-6 pb-6">
+            <TouchableOpacity 
+                onPress={() => { 
+                    logout(); 
+                    onClose(); 
+                }} 
+                className="flex-row items-center p-3 rounded-xl bg-red-50"
+            >
+                <LogOut size={20} color="#dc2626" />
+                <Text className="ml-3 font-bold text-red-600">{dictionary.logout}</Text>
+            </TouchableOpacity>
                 <Text className="text-center text-xs text-gray-400 mt-4">v1.0.0 - Kampüs App</Text>
-              </View>
+        </View>
+    )}
 
             </View>
           </SafeAreaView>
