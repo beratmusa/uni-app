@@ -1,10 +1,12 @@
-import { Modal, View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Share } from 'react-native';
+import { Modal, View, Text, Image, ScrollView, TouchableOpacity, Dimensions, Share, Platform } from 'react-native';
 import { X, Calendar, Share2, MapPin } from 'lucide-react-native';
 import RenderHtml from 'react-native-render-html';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLanguage } from '../context/LanguageContext';
+import { useState, useEffect } from 'react';
 
-const { width } = Dimensions.get('window');
+const screenWidth = Dimensions.get('window').width;
 
 export interface DetailData {
   title: string;
@@ -13,6 +15,7 @@ export interface DetailData {
   content?: string | null;
   location?: string;
   category?: string;
+  gallery?: string[];
 }
 
 interface DetailModalProps {
@@ -23,6 +26,30 @@ interface DetailModalProps {
 
 export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
   const insets = useSafeAreaInsets();
+  const { dictionary } = useLanguage();
+  
+  const [activeImage, setActiveImage] = useState<string | null>(null);
+  const [imageHeight, setImageHeight] = useState(250);
+
+  // --- DÜZELTME BURADA ---
+  // Data değiştiğinde (yeni bir şeye tıklandığında):
+  // 1. Eğer yeni verinin resmi varsa onu aktif yap.
+  // 2. Eğer resmi YOKSA (örn: duyuru), activeImage'i NULL yap (eski resmi temizle).
+  useEffect(() => {
+    setActiveImage(data?.image || null);
+  }, [data]);
+
+  // Resim değiştiğinde boyutunu hesapla
+  useEffect(() => {
+    if (activeImage) {
+      Image.getSize(activeImage, (w, h) => {
+        const newHeight = (screenWidth / w) * h;
+        setImageHeight(newHeight);
+      }, (error) => {
+        console.log("Resim boyutu alınamadı:", error);
+      });
+    }
+  }, [activeImage]);
 
   if (!data) return null;
 
@@ -42,9 +69,9 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
     img: { width: '100%', borderRadius: 12, marginVertical: 10 },
   };
 
-  // --- DİNAMİK YÜKSEKLİK AYARI ---
-  const isEvent = data.category === 'Etkinlik';
-  const imageHeight = isEvent ? 'h-[500px]' : 'h-64';
+  const allImages = data.image 
+    ? Array.from(new Set([data.image, ...(data.gallery || [])]))
+    : data.gallery || [];
 
   return (
     <Modal
@@ -58,14 +85,14 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
         {/* HEADER */}
         <View 
           className="flex-row justify-between items-center px-4 pb-3 border-b border-gray-100 bg-white z-10"
-          style={{ paddingTop: insets.top + 10 }}
+          style={{ paddingTop: Platform.OS === 'android' ? insets.top + 10 : 15 }}
         >
           <TouchableOpacity onPress={onClose} className="p-2 bg-gray-100 rounded-full">
             <X color="#1f2937" size={24} />
           </TouchableOpacity>
 
           <Text className="font-bold text-gray-500 text-xs uppercase tracking-widest w-48 text-center" numberOfLines={1}>
-            {data.category || "Detay"}
+            {data.category || dictionary.details}
           </Text>
 
           <TouchableOpacity onPress={handleShare} className="p-2 bg-blue-50 rounded-full">
@@ -76,18 +103,52 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
         {/* İÇERİK */}
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false} bounces={false}>
           
-          
-          {data.image && (
-            <Image 
-              source={{ uri: data.image }} 
-              className={`w-full ${imageHeight} bg-gray-200`}
-              resizeMode="cover" 
-            />
+          {/* 1. AKILLI RESİM ALANI (Sadece aktif resim varsa göster) */}
+          {activeImage && (
+            <View className="w-full bg-gray-50 relative">
+              <Image 
+                source={{ uri: activeImage }} 
+                style={{ width: screenWidth, height: imageHeight }}
+                resizeMode="contain"
+              />
+            </View>
           )}
 
           <View className="p-5 pb-20">
-            {/* ETİKETLER */}
-            <View className="flex-row items-center mb-3 space-x-4">
+
+            {/* 2. GALERİ (Birden fazla resim varsa göster) */}
+            {allImages.length > 1 && (
+              <View className="mb-6">
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  className="-ml-1"
+                >
+                  {allImages.map((imgUrl, index) => {
+                    const isActive = imgUrl === activeImage;
+                    return (
+                      <TouchableOpacity 
+                        key={index} 
+                        onPress={() => setActiveImage(imgUrl)}
+                        activeOpacity={0.8} 
+                        className={`mr-3 rounded-xl overflow-hidden border-2 ${
+                          isActive ? 'border-blue-600' : 'border-transparent'
+                        }`}
+                      >
+                        <Image 
+                          source={{ uri: imgUrl }} 
+                          className="w-24 h-24 bg-gray-100"
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* 3. META BİLGİLER */}
+            <View className="flex-row items-center mb-4 space-x-4">
               <View className="flex-row items-center bg-blue-50 px-3 py-1 rounded-lg">
                 <Calendar size={14} color="#2563eb" />
                 <Text className="text-blue-700 text-xs font-bold ml-2">{data.date}</Text>
@@ -103,15 +164,15 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
               )}
             </View>
 
-            {/* BAŞLIK */}
+            {/* 4. BAŞLIK */}
             <Text className="text-2xl font-extrabold text-gray-900 leading-8 mb-6">
               {data.title}
             </Text>
 
-            {/* HTML İÇERİK */}
+            {/* 5. METİN */}
             {data.content ? (
               <RenderHtml
-                contentWidth={width - 40}
+                contentWidth={screenWidth - 40}
                 source={{ html: data.content }}
                 tagsStyles={tagsStyles as any}
                 systemFonts={["System", "Roboto", "Arial"]}
@@ -121,6 +182,7 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
                 İçerik detayı bulunmuyor.
               </Text>
             )}
+
           </View>
         </ScrollView>
       </View>
