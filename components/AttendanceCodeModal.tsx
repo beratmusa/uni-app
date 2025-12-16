@@ -10,7 +10,7 @@ interface AttendanceCodeModalProps {
 }
 
 export const AttendanceCodeModal = ({ visible, onClose, onSubmit }: AttendanceCodeModalProps) => {
-  const { dictionary } = useLanguage(); // <-- SÖZLÜĞÜ ÇEK
+  const { dictionary } = useLanguage();
   const [code, setCode] = useState('');
 
   const handleSubmit = () => {
@@ -52,7 +52,7 @@ export const AttendanceCodeModal = ({ visible, onClose, onSubmit }: AttendanceCo
           {/* Input */}
           <View className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-6">
             <TextInput
-              placeholder={dictionary.codePlaceholder} // Placeholder değişti
+              placeholder={dictionary.codePlaceholder}
               placeholderTextColor="#94a3b8"
               value={code}
               onChangeText={setCode}

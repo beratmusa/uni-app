@@ -85,10 +85,43 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
     navigation.navigate('QRScanner'); // QR Ekranına git
   };
 
-  const handleCodeSubmit = (code: string) => {
-    console.log("Girilen Yoklama Kodu:", code);
-    // Alert mesajını da dile göre ayarla
-    alert(`${dictionary.codeSuccessMessage} ${code}`);
+  const handleCodeSubmit = async (code: string) => {
+    // 1. Token kontrolü (Giriş yapılmış mı?)
+    if (!token) {
+      alert("Lütfen önce giriş yapınız.");
+      return;
+    }
+
+    try {
+      console.log("Yoklama gönderiliyor...", code);
+
+      // 2. Sunucuya İstek Atma
+      // Gerçek API adresini buraya yazmalısın
+      const response = await fetch('https://mobil.kastamonu.edu.tr/api/Yoklama/Katil', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, // <-- İŞTE KİMLİĞİN BURADA GİDİYOR
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          attendanceCode: code // Gönderilen kod
+        })
+      });
+
+      // 3. Sonucu Kontrol Etme
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Başarılı! ${result.message || "Yoklamaya katıldınız."}`);
+        
+        setCodeModalVisible(false);
+      } else {
+        alert("❌ Başarısız: Kod hatalı veya süre dolmuş olabilir.");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Bağlantı hatası oluştu.");
+    }
   };
 
   return (
