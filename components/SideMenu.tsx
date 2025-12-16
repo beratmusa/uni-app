@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard } from 'lucide-react-native';
+import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import { useLanguage } from '../context/LanguageContext';
@@ -257,6 +257,26 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                       </View>
                     )}
                   </View>
+                )}
+
+                {/* --- DERSLERİM BUTONU --- */}
+                {/* Sadece token varsa (giriş yapıldıysa) göster */}
+                {token && (
+                  <TouchableOpacity 
+                      onPress={() => {
+                        onClose(); // Menüyü kapat
+                        navigation.navigate('CourseList'); // Sayfaya git
+                      }} 
+                      className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100"
+                  >
+                    <View className="opacity-60 text-gray-700">
+                        <BookOpen size={20} />
+                    </View>
+                    <Text className="ml-3 font-semibold text-gray-700 text-base">
+                        {dictionary.myCourses}
+                    </Text>
+                    <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+                  </TouchableOpacity>
                 )}
                 
                 {/* 2. YEMEK LİSTESİ */}
