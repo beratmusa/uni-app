@@ -1,3 +1,4 @@
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LanguageProvider, useLanguage } from './context/LanguageContext'; 
@@ -8,8 +9,15 @@ import { AnnouncementListScreen } from './screens/AnnouncementListScreen';
 import { EventListScreen } from './screens/EventListScreen';
 import { AuthProvider } from './context/AuthContext'; 
 import { LoginScreen } from './screens/LoginScreen';
+import { QRScannerScreen } from './screens/QRScannerScreen';
+import { CourseListScreen } from './screens/CourseListScreen';
 
 const Stack = createNativeStackNavigator();
+// Bu ayar katı modu kapatır ve gereksiz uyarıyı engeller
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false, 
+});
 
 const AppNavigator = () => {
   const { language } = useLanguage();
@@ -36,6 +44,16 @@ const AppNavigator = () => {
           name="EventList" 
           component={EventListScreen}
           options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen 
+          name="QRScanner" 
+          component={QRScannerScreen} 
+          options={{ headerShown: false, presentation: 'modal' }}
+        />
+        <Stack.Screen 
+          name="CourseList" 
+          component={CourseListScreen} 
+          options={{ animation: 'slide_from_right' }} 
         />
 
       </Stack.Navigator>

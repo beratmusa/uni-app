@@ -68,7 +68,7 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
 
   return (
     // Üstten boşluk (mt-8) korundu
-    <View className="flex-1 bg-white mt-8" onLayout={onLayout}>
+    <View className="flex-1 mt-14 mb-8" onLayout={onLayout}>
       
       {/* 1. ÜST KISIM (TAB) */}
       <View className="flex-row h-[70px]">
@@ -87,14 +87,14 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
       <View className="flex-1 flex-row">
         
         {/* A. SOL SÜTUN */}
-        <View className="w-[35%] bg-white relative">
+        <View className="w-[35%] relative">
             
             {/* KIVRIM SÜSÜ */}
             <View 
                 pointerEvents="none" 
                 className="absolute top-0 right-0 w-full h-[30px] bg-orange-600"
             >
-                <View className="w-full h-full bg-white rounded-tr-[30px]" />
+                <View className="w-full h-full bg-gray-50 rounded-tr-[30px]" />
             </View>
 
             <ScrollView 
@@ -113,11 +113,11 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
                             className={`p-3 rounded-xl border ${
                                 isActive 
                                 ? "bg-orange-50 border-orange-200" 
-                                : "bg-gray-50 border-transparent"
+                                : "bg-white border-transparent"
                             }`}
                         >
                             <Text className={`text-xs font-bold leading-4 ${
-                                isActive ? "text-orange-700" : "text-gray-500"
+                                isActive ? "text-orange-700" : "text-gray-700"
                             }`}>
                                 {language === 'tr' ? item.adTR : (item.adEN || item.adTR)}
                             </Text>
