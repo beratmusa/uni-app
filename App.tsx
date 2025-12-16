@@ -8,6 +8,7 @@ import { AnnouncementListScreen } from './screens/AnnouncementListScreen';
 import { EventListScreen } from './screens/EventListScreen';
 import { AuthProvider } from './context/AuthContext'; 
 import { LoginScreen } from './screens/LoginScreen';
+import { QRScannerScreen } from './screens/QRScannerScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,6 +37,11 @@ const AppNavigator = () => {
           name="EventList" 
           component={EventListScreen}
           options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen 
+          name="QRScanner" 
+          component={QRScannerScreen} 
+          options={{ headerShown: false, presentation: 'modal' }}
         />
 
       </Stack.Navigator>

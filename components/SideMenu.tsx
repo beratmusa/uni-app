@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils } from 'lucide-react-native';
+import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import { useLanguage } from '../context/LanguageContext';
@@ -9,6 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Image } from 'react-native';
 
 import { PdfModal } from './PdfModal';
+import { AttendanceCodeModal } from './AttendanceCodeModal';
 
 const UBYS_BASE_URL = "https://ubys.kastamonu.edu.tr/Framework/Integration/Authenticater/Login?authToken=";
 
@@ -30,6 +31,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const { token,userInfo ,logout } = useAuth();
   const navigation = useNavigation<any>();
   const [isCalendarOpen, setCalendarOpen] = useState(false);
+  const [isAttendanceOpen, setAttendanceOpen] = useState(false);
 
   const [pdfVisible, setPdfVisible] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const [webViewVisible, setWebViewVisible] = useState(false);
   const [webViewUrl, setWebViewUrl] = useState<string | null>(null);
   const [webViewTitle, setWebViewTitle] = useState("");
+  const [codeModalVisible, setCodeModalVisible] = useState(false);
 
   const handleDiningClick = () => {
     onClose(); 
@@ -75,6 +78,17 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
       onClose(); // Menüyü kapat
       navigation.navigate('Login'); // LoginScreen (sorgu.kastamonu.edu.tr) açılır
     }
+  };
+
+  const handleQRClick = () => {
+    onClose(); // Menüyü kapat
+    navigation.navigate('QRScanner'); // QR Ekranına git
+  };
+
+  const handleCodeSubmit = (code: string) => {
+    console.log("Girilen Yoklama Kodu:", code);
+    // Alert mesajını da dile göre ayarla
+    alert(`${dictionary.codeSuccessMessage} ${code}`);
   };
 
   return (
@@ -175,11 +189,75 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
               </View>
 
               <View className="gap-2">
-                <TouchableOpacity onPress={handleUbysClick} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
-                   <View className="opacity-60 text-gray-700"><User size={20} /></View>
-                   <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.login}</Text>
-                   <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
-                </TouchableOpacity>
+                {!token && (
+                  <TouchableOpacity 
+                      onPress={handleUbysClick} 
+                      className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200"
+                  >
+                    <View className="opacity-60 text-gray-700"><User size={20} /></View>
+                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.login}</Text>
+                    <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+                  </TouchableOpacity>
+                )}
+
+                {/* --- YOKLAMA BÖLÜMÜ --- */}
+                {token && (
+                  <View>
+                    <TouchableOpacity 
+                      onPress={() => setAttendanceOpen(!isAttendanceOpen)} 
+                      className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isAttendanceOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}
+                    >
+                      <View className={`${isAttendanceOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}>
+                          <ClipboardCheck size={20} color={isAttendanceOpen ? "#2563eb" : "#374151"} />
+                      </View>
+                      
+                      {/* BAŞLIK DEĞİŞTİ */}
+                      <Text className={`ml-3 font-semibold text-base ${isAttendanceOpen ? "text-blue-700" : "text-gray-700"}`}>
+                          {dictionary.attendance} 
+                      </Text>
+                      
+                      {isAttendanceOpen ? 
+                          <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : 
+                          <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+                      }
+                    </TouchableOpacity>
+
+                    {isAttendanceOpen && (
+                      <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
+                        
+                        {/* Kod ile Katıl Butonu */}
+                        <TouchableOpacity 
+                          onPress={() => setCodeModalVisible(true)}
+                          className="flex-row items-center p-3 rounded-lg active:bg-blue-50"
+                        >
+                          <Keyboard size={16} color="#64748b" className="mr-3" />
+                          
+                          
+                          <Text className="text-gray-600 font-medium text-sm">
+                            {dictionary.joinWithCode}
+                          </Text>
+                          
+                          <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                        </TouchableOpacity>
+
+                        {/* QR ile Katıl Butonu */}
+                        <TouchableOpacity 
+                          onPress={handleQRClick}
+                          className="flex-row items-center p-3 rounded-lg active:bg-blue-50"
+                        >
+                          <QrCode size={16} color="#64748b" className="mr-3" />
+                          
+                         
+                          <Text className="text-gray-600 font-medium text-sm">
+                            {dictionary.joinWithQR}
+                          </Text>
+                          
+                          <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )}
                 
                 {/* 2. YEMEK LİSTESİ */}
                 <TouchableOpacity onPress={handleDiningClick} className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100">
@@ -255,6 +333,11 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
         url={pdfUrl}
         title={pdfTitle}
         onClose={() => setPdfVisible(false)}
+      />
+      <AttendanceCodeModal 
+        visible={codeModalVisible}
+        onClose={() => setCodeModalVisible(false)}
+        onSubmit={handleCodeSubmit}
       />
     </Animated.View>
   );
