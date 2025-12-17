@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,} from 'lucide-react-native';
+import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,Briefcase} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import { useLanguage } from '../context/LanguageContext';
@@ -28,7 +28,7 @@ interface SideMenuProps {
 
 export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideMenuProps) => {
   const { language, setLanguage, dictionary } = useLanguage();
-  const { token,userInfo ,logout } = useAuth();
+  const { token,userInfo,isStudent ,logout } = useAuth();
   const navigation = useNavigation<any>();
   const [isCalendarOpen, setCalendarOpen] = useState(false);
   const [isAttendanceOpen, setAttendanceOpen] = useState(false);
@@ -124,6 +124,13 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
     }
   };
 
+  const handleInstructorAttendance = () => {
+      onClose();
+      // İleride buraya hoca ekranı navigasyonu gelecek
+      alert("Akademisyen yoklama ekranı yakında eklenecek.");
+      // navigation.navigate('InstructorAttendance'); 
+  };
+
   return (
     <Animated.View className="absolute inset-0 z-50">
       <Animated.View entering={FadeIn} exiting={FadeOut} className="absolute inset-0 bg-black/60">
@@ -143,44 +150,32 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                 </TouchableOpacity>
               </View>
 
-              {/* Profil */}
+              {/* PROFİL KARTI */}
               <View className="flex-row items-center mb-8 p-3 bg-blue-50 rounded-xl border border-blue-100">
-      
-      {/* PROFİL FOTOĞRAFI ALANI */}
-      <View className="w-12 h-12 bg-blue-600 rounded-full items-center justify-center overflow-hidden border-2 border-white shadow-sm">
-          {token && userInfo?.Image ? (
-            <Image 
-              source={{ uri: `data:image/jpeg;base64,${userInfo.Image}` }} 
-              className="w-full h-full"
-              resizeMode="cover"
-            />
-          ) : (
-            <Text className="text-white font-bold text-lg">
-              {token && userInfo?.TitleNameSurname 
-                ? userInfo.TitleNameSurname.charAt(0).toUpperCase() 
-                : (token ? "✓" : "Ö") 
-              }
-            </Text>
-          )}
-      </View>
-
-      {/* İSİM VE DURUM ALANI */}
-      <View className="ml-3 flex-1">
-          <Text className="font-bold text-gray-900 text-sm" numberOfLines={1}>
-              {token && userInfo 
-                ? userInfo.TitleNameSurname // API'den gelen İsim Soyisim
-                : dictionary.studentLogin   // "Öğrenci Girişi"
-              }
-          </Text>
-          
-          <Text className="text-xs text-blue-600 font-medium">
-              {token 
-                ? (userInfo?.Email || (language === 'tr' ? "Oturum Açık" : "Session Active"))
-                : dictionary.notLoggedIn
-              }
-          </Text>
-      </View>
-    </View>
+                <View className={`w-12 h-12 rounded-full items-center justify-center overflow-hidden border-2 border-white shadow-sm ${isStudent ? 'bg-blue-600' : 'bg-orange-600'}`}>
+                    {token && userInfo?.Image ? (
+                      <Image 
+                        source={{ uri: `data:image/jpeg;base64,${userInfo.Image}` }} 
+                        className="w-full h-full" resizeMode="cover"
+                      />
+                    ) : (
+                      <Text className="text-white font-bold text-lg">
+                        {token && userInfo?.TitleNameSurname ? userInfo.TitleNameSurname.charAt(0).toUpperCase() : (token ? "✓" : "Ö")}
+                      </Text>
+                    )}
+                </View>
+                <View className="ml-3 flex-1">
+                    <Text className="font-bold text-gray-900 text-sm" numberOfLines={1}>
+                        {token && userInfo ? userInfo.TitleNameSurname : dictionary.studentLogin}
+                    </Text>
+                    <Text className={`text-xs font-medium ${isStudent ? 'text-blue-600' : 'text-orange-600'}`}>
+                        {token 
+                          ? (isStudent ? dictionary.studentLogin : dictionary.instructorLogin) // Rolü yazdırıyoruz
+                          : dictionary.notLoggedIn
+                        }
+                    </Text>
+                </View>
+              </View>
 
               {/* --- MODERN DİL SEÇİMİ (SEGMENTED CONTROL) --- */}
               <View className="flex-row bg-slate-100 p-1.5 rounded-2xl mb-8 border border-slate-200">
@@ -236,78 +231,61 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                 {/* --- YOKLAMA BÖLÜMÜ --- */}
                 {token && (
                   <View>
-                    <TouchableOpacity 
-                      onPress={() => setAttendanceOpen(!isAttendanceOpen)} 
-                      className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isAttendanceOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}
-                    >
-                      <View className={`${isAttendanceOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}>
-                          <ClipboardCheck size={20} color={isAttendanceOpen ? "#2563eb" : "#374151"} />
-                      </View>
-                      
-                      {/* BAŞLIK DEĞİŞTİ */}
-                      <Text className={`ml-3 font-semibold text-base ${isAttendanceOpen ? "text-blue-700" : "text-gray-700"}`}>
-                          {dictionary.attendance} 
-                      </Text>
-                      
-                      {isAttendanceOpen ? 
-                          <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : 
-                          <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
-                      }
-                    </TouchableOpacity>
-
-                    {isAttendanceOpen && (
-                      <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
-                        
-                        {/* Kod ile Katıl Butonu */}
+                    {isStudent ? (
+                      // 1. ÖĞRENCİ GÖRÜNÜMÜ (Accordion Menü)
+                      <View>
                         <TouchableOpacity 
-                          onPress={() => setCodeModalVisible(true)}
-                          className="flex-row items-center p-3 rounded-lg active:bg-blue-50"
+                          onPress={() => setAttendanceOpen(!isAttendanceOpen)} 
+                          className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isAttendanceOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}
                         >
-                          <Keyboard size={16} color="#64748b" className="mr-3" />
-                          
-                          
-                          <Text className="text-gray-600 font-medium text-sm">
-                            {dictionary.joinWithCode}
+                          <View className={`${isAttendanceOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}>
+                              <ClipboardCheck size={20} color={isAttendanceOpen ? "#2563eb" : "#374151"} />
+                          </View>
+                          <Text className={`ml-3 font-semibold text-base ${isAttendanceOpen ? "text-blue-700" : "text-gray-700"}`}>
+                              {dictionary.attendance}
                           </Text>
-                          
-                          <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                          {isAttendanceOpen ? <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />}
                         </TouchableOpacity>
 
-                        {/* QR ile Katıl Butonu */}
-                        <TouchableOpacity 
-                          onPress={handleQRClick}
-                          className="flex-row items-center p-3 rounded-lg active:bg-blue-50"
-                        >
-                          <QrCode size={16} color="#64748b" className="mr-3" />
-                          
-                         
-                          <Text className="text-gray-600 font-medium text-sm">
-                            {dictionary.joinWithQR}
-                          </Text>
-                          
-                          <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
-                        </TouchableOpacity>
+                        {isAttendanceOpen && (
+                          <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
+                            <TouchableOpacity onPress={() => setCodeModalVisible(true)} className="flex-row items-center p-3 rounded-lg active:bg-blue-50">
+                              <Keyboard size={16} color="#64748b" className="mr-3" />
+                              <Text className="text-gray-600 font-medium text-sm">{dictionary.joinWithCode}</Text>
+                              <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={handleQRClick} className="flex-row items-center p-3 rounded-lg active:bg-blue-50">
+                              <QrCode size={16} color="#64748b" className="mr-3" />
+                              <Text className="text-gray-600 font-medium text-sm">{dictionary.joinWithQR}</Text>
+                              <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
+                    ) : (
+                      // 2. AKADEMİSYEN GÖRÜNÜMÜ (Tek Buton)
+                      <TouchableOpacity 
+                          onPress={handleInstructorAttendance}
+                          className="flex-row items-center p-4 rounded-xl active:bg-orange-50 border border-transparent active:border-orange-100"
+                      >
+                        <View className="opacity-60 text-gray-700"><Briefcase size={20} /></View>
+                        <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.attendanceOperations}</Text>
+                        <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+                      </TouchableOpacity>
                     )}
                   </View>
                 )}
 
                 {/* --- DERSLERİM BUTONU --- */}
                 {/* Sadece token varsa (giriş yapıldıysa) göster */}
-                {token && (
+                {token && isStudent && (
                   <TouchableOpacity 
-                      onPress={() => {
-                        onClose(); // Menüyü kapat
-                        navigation.navigate('CourseList'); // Sayfaya git
-                      }} 
+                      onPress={() => { onClose(); navigation.navigate('CourseList'); }} 
                       className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100"
                   >
-                    <View className="opacity-60 text-gray-700">
-                        <BookOpen size={20} />
-                    </View>
-                    <Text className="ml-3 font-semibold text-gray-700 text-base">
-                        {dictionary.myCourses}
-                    </Text>
+                    <View className="opacity-60 text-gray-700"><BookOpen size={20} /></View>
+                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.myCourses}</Text>
                     <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
                   </TouchableOpacity>
                 )}

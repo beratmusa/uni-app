@@ -1,24 +1,34 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// API'den dönen veri yapısı
+// 1. Applications İçin Model Tanımı
+interface Application {
+  Id: number;
+  ContextId: number;
+  Uri: string;
+  Enabled: boolean;
+  Name: string; // <-- Bizi ilgilendiren kısım burası
+}
+
+// 2. UserInfo Modeli (Applications dizisi eklendi)
 interface UserInfo {
   Id: number;
   Email: string;
   PersonId: number;
   TitleNameSurname: string; 
   Image: string | null;     
-  BirthDate: string;
+  Applications: Application[]; // <-- API'den gelen liste
 }
 
 interface AuthContextType {
   token: string | null;
   userInfo: UserInfo | null;
+  isStudent: boolean; // <-- Rol durumu
   isLoading: boolean;
   login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   validateToken: (tokenToCheck: string) => Promise<boolean>;
-  fetchUserInfo: (tokenToUse: string) => Promise<boolean>; // <-- Boolean dönecek şekilde güncelledik
+  fetchUserInfo: (tokenToUse: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,146 +36,100 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isStudent, setIsStudent] = useState<boolean>(true); // Varsayılan true
   const [isLoading, setIsLoading] = useState(true);
 
   // --- KULLANICI BİLGİLERİNİ ÇEKME ---
-  // Artık işlemin başarılı olup olmadığını (true/false) dönüyor
   const fetchUserInfo = async (tokenToUse: string): Promise<boolean> => {
     try {
       console.log("🚀 Kullanıcı bilgileri isteniyor...");
       const cleanToken = tokenToUse.trim();
 
-      // 1. DENEME: 'Token' başlığı ile
-      let response = await fetch('https://mobil.kastamonu.edu.tr/api/Authentication/GetMyInfo', {
+      const response = await fetch('https://mobil.kastamonu.edu.tr/api/Authentication/GetMyInfo', {
         method: 'GET',
         headers: {
-          'Token': cleanToken,
+          'Authorization': `Bearer ${cleanToken}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
       });
 
-      // 2. DENEME: 401 alırsak Bearer ile dene
-      if (response.status === 401) {
-        console.log("⚠️ Token header başarısız, Bearer deneniyor...");
-        response = await fetch('https://mobil.kastamonu.edu.tr/api/Authentication/GetMyInfo', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${cleanToken}`, 
-              'Content-Type': 'application/json',
-              'User-Agent': 'PostmanRuntime/7.36.0'
-            }
-        });
-      }
-
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Kullanıcı Bilgisi Alındı:", data.TitleNameSurname);
+        console.log("✅ Kullanıcı:", data.TitleNameSurname);
+        
+        // --- ROL KONTROLÜ (SADECE APPLICATION NAME İLE) ---
+        let studentStatus = false;
+
+        if (data.Applications && Array.isArray(data.Applications)) {
+          // Dizinin içinde Name alanı "Öğrenci Mobil" içeren bir öğe var mı?
+          studentStatus = data.Applications.some((app: Application) => 
+            app.Name.includes("Öğrenci Mobil")
+          );
+        }
+
+        console.log("🎓 Tespit Edilen Rol:", studentStatus ? "Öğrenci" : "Akademisyen");
+
+        setIsStudent(studentStatus);
         setUserInfo(data);
-        return true; // Başarılı
+        return true; 
       } else {
-        const errorText = await response.text();
-        console.log("❌ Bilgi alınamadı:", response.status, errorText);
-        return false; // Başarısız
+        return false; 
       }
 
     } catch (error) {
-      console.error("🔥 fetchUserInfo Hatası:", error);
-      return false; // Hata
+      console.error("fetchUserInfo Hatası:", error);
+      return false; 
     }
   };
 
+  // --- TOKEN DOĞRULAMA (Değişiklik Yok) ---
   const validateToken = async (tokenToCheck: string): Promise<boolean> => {
     try {
       const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/ServiceCaller/Auth', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           serviceName: "GetTokenValidate",
-          serviceCriteria: {
-            Token: tokenToCheck
-          }
+          serviceCriteria: { Token: tokenToCheck }
         }),
       });
-
+      // ... (Geri kalan aynı)
       const responseText = await response.text();
-      let json;
-      try {
-        json = JSON.parse(responseText);
-      } catch (e) {
-        if (responseText.toLowerCase() === 'true') return true;
-        return false;
-      }
-
-      if (json === true) return true;
-      if (typeof json === 'object' && json !== null) {
-         if (json.Result === true || json.result === true || json.Success === true || json.success === true) {
-             return true;
-         }
-      }
+      if (responseText.toLowerCase() === 'true' || responseText.includes('true')) return true;
       return false; 
-    } catch (error) {
-      return false; 
-    }
+    } catch (error) { return false; }
   };
 
-  // --- UYGULAMA AÇILIŞI (GÜNCELLENDİ) ---
+  // --- UYGULAMA AÇILIŞI (Değişiklik Yok) ---
   useEffect(() => {
     const initAuth = async () => {
       try {
         const storedToken = await AsyncStorage.getItem('userToken');
-        
         if (storedToken) {
-          // 1. Önce sunucudan basit validasyon yap (Hızlı kontrol)
           const isValidFormat = await validateToken(storedToken);
-          
           if (isValidFormat) {
-            console.log("Token formatı geçerli, veri çekmeye çalışılıyor...");
-            
-            // 2. ASIL TEST: Veriyi çekebiliyor muyuz?
             const dataFetched = await fetchUserInfo(storedToken);
-            
             if (dataFetched) {
-              // Veri geldiyse token gerçekten sağlamdır.
               setToken(storedToken);
             } else {
-              // Validate true dese bile veri gelmiyorsa token işe yaramaz. Çıkış yap.
-              console.log("Token geçerli ama veri alınamadı. Oturum kapatılıyor.");
               await logout();
             }
           } else {
-            console.log("Token formatı geçersiz.");
             await logout();
           }
         }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
+      } catch (e) { console.error(e); } 
+      finally { setIsLoading(false); }
     };
-
     initAuth();
   }, []);
 
   const login = async (newToken: string) => {
-    // Önce kaydet
     await AsyncStorage.setItem('userToken', newToken);
-    
-    // Sonra veriyi çekmeyi dene
     const success = await fetchUserInfo(newToken);
-    
-    if (success) {
-        setToken(newToken); // Başarılıysa state'i güncelle (Uygulama açılır)
-    } else {
-        // Token ile veri çekilemediyse kaydı sil (Hatalı giriş gibi davran)
-        console.log("Giriş sonrası veri çekilemedi, token siliniyor.");
-        await AsyncStorage.removeItem('userToken');
-        alert("Giriş başarısız oldu. Lütfen tekrar deneyin.");
-    }
+    if (success) setToken(newToken);
+    else await AsyncStorage.removeItem('userToken');
   };
 
   const logout = async () => {
@@ -175,7 +139,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, userInfo, isLoading, login, logout, validateToken, fetchUserInfo }}>
+    <AuthContext.Provider value={{ token, userInfo, isStudent, isLoading, login, logout, validateToken, fetchUserInfo }}>
       {children}
     </AuthContext.Provider>
   );

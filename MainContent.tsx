@@ -235,7 +235,7 @@ export default function MainContent() {
             showsVerticalScrollIndicator={false}
           >
             
-            <HeroSlider data={slaytlar} />
+            {/* <HeroSlider data={slaytlar} /> */}
             <AgendaList data={gundem} onItemClick={handleAgendaClick}/>
 
             <AnnouncementList data={haberler} onItemClick={handleAnnouncementClick}/>

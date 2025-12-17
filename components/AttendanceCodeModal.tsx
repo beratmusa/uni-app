@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { X, Check } from 'lucide-react-native';
-import { useLanguage } from '../context/LanguageContext'; // <-- IMPORT ET
+import { useLanguage } from '../context/LanguageContext';
 
 interface AttendanceCodeModalProps {
   visible: boolean;
