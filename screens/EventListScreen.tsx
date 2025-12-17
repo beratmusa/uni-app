@@ -144,7 +144,7 @@ export const EventListScreen = ({ navigation }: any) => {
         onPress={() => handleItemPress(item)}
         activeOpacity={0.7}
         // DÜZELTME: border-rose-200 yerine border-red-200 kullanıldı (Standart renk)
-        className="bg-white rounded-xl mb-3 shadow-sm border border-red-200 flex-row h-32 overflow-hidden"
+        className="bg-white rounded-xl mb-3 shadow-sm border-red-200 flex-row h-32 "
       >
         {/* SOL: RESİM ALANI */}
         {/* w-32: Genişlik sabit, h-full: Yükseklik tam */}
@@ -216,7 +216,7 @@ export const EventListScreen = ({ navigation }: any) => {
           onPress={() => setIsDropdownOpen(true)}
           activeOpacity={0.8}
           // DÜZELTME: border-rose-200 -> border-red-200 (Siyah kenarlığı engellemek için)
-          className="flex-row items-center justify-between bg-white border border-red-200 p-4 rounded-xl shadow-sm"
+          className="flex-row items-center justify-between bg-white border-red-200 p-4 rounded-xl shadow-sm"
         >
           <View className="flex-row items-center">
             <View className="bg-red-50 p-2 rounded-lg mr-3">
