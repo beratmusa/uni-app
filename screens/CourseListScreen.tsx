@@ -1,79 +1,204 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, BookOpen, GraduationCap } from 'lucide-react-native';
+import { ArrowLeft, GraduationCap, User as UserIcon } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 
-// Örnek Ders Verisi Tipi
-interface CourseData {
-  id: string;
+interface LessonRaw {
+  LessonName: string;
+  LessonCode: string;
+  LessonCredit: number;
+  TeacherName: string;
+  TeacherTitle: string;
+  ClassId: number;
+}
+
+interface ExamRaw {
+  ExamResult: number;
+  ExcuseExamResult: number;
+  ClassId: number;
+  SharedExamName: string;
+  ExamStartDate: string | null;
+}
+
+interface DisplayCourse {
+  id: number;
   code: string;
   name: string;
-  midterm: number | string;
-  final: number | string;
-  average: number | string;
-  letterGrade: string;
-  passed: boolean;
+  teacher: string;
+  vize: string;
+  final: string;
+  butunleme: string;
+  average: string;
 }
 
 export const CourseListScreen = () => {
   const { dictionary } = useLanguage();
   const navigation = useNavigation();
   const { token } = useAuth();
+  
   const [loading, setLoading] = useState(true);
-  const [courses, setCourses] = useState<CourseData[]>([]);
+  const [courses, setCourses] = useState<DisplayCourse[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchCoursesAndGrades = async () => {
+    if (!token) {
+        setLoading(false);
+        return;
+    }
+
+    try {
+      console.log("📚 Ders listesi çekiliyor (POST)...");
+      const cleanToken = token.trim();
+
+      // 1. ADIM: Ders Listesi (POST İsteği)
+      const lessonResponse = await fetch('https://mobil.kastamonu.edu.tr/api/Student/GetStudentLessonInfo', {
+        method: 'POST', // <-- DEĞİŞİKLİK: POST yapıldı
+        headers: {
+          'Authorization': `Bearer ${cleanToken}`,
+          // 'Cookie': 'ASP.NET_SessionId=...' // Gerekirse cookie yönetimi eklenir ama genelde Token yeterlidir.
+        },
+        body: '' // Postman'deki raw="" kısmı
+      });
+
+      if (!lessonResponse.ok) {
+        throw new Error(`Ders listesi hatası: ${lessonResponse.status}`);
+      }
+      
+      const lessonJson = await lessonResponse.json();
+      const lessonList: LessonRaw[] = lessonJson.Data || [];
+
+      console.log(`✅ ${lessonList.length} ders bulundu. Notlar çekiliyor...`);
+
+      if (lessonList.length === 0) {
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+
+      // 2. ADIM: Notları Çek (POST İsteği ve JSON Body ile)
+      const combinedData = await Promise.all(
+        lessonList.map(async (lesson) => {
+          try {
+            // URL sonunda slash var, Postman koduna sadık kalalım
+            const examUrl = 'https://mobil.kastamonu.edu.tr/api/Student/GetStudentExamInfo/'; 
+            
+            const examResponse = await fetch(examUrl, {
+              method: 'POST', // <-- DEĞİŞİKLİK: POST yapıldı
+              headers: {
+                'Authorization': `Bearer ${cleanToken}`,
+                'Content-Type': 'application/json' // JSON gönderdiğimiz için şart
+              },
+              // <-- DEĞİŞİKLİK: classId Body içinde gönderiliyor
+              body: JSON.stringify({
+                "classId": lesson.ClassId 
+              })
+            });
+
+            let vize = "-";
+            let final = "-";
+            let butunleme = "-";
+
+            if (examResponse.ok) {
+              const examJson = await examResponse.json();
+              const exams: ExamRaw[] = examJson.Data || [];
+
+              exams.forEach(exam => {
+                // Not null ise string'e çevir
+                const result = exam.ExamResult !== null ? exam.ExamResult.toString() : "-";
+                const name = exam.SharedExamName ? exam.SharedExamName.toLowerCase() : "";
+                
+                if (name.includes("vize") || name.includes("ara")) vize = result;
+                else if (name.includes("final") || name.includes("genel")) final = result;
+                else if (name.includes("bütünleme")) butunleme = result;
+              });
+            }
+
+            // Ortalama Hesabı (Basit)
+            let avg = "-";
+            if (vize !== "-" && final !== "-") {
+                const v = parseFloat(vize);
+                const f = parseFloat(final);
+                if (!isNaN(v) && !isNaN(f)) {
+                    avg = (v * 0.4 + f * 0.6).toFixed(0);
+                }
+            }
+
+            return {
+              id: lesson.ClassId,
+              code: lesson.LessonCode,
+              name: lesson.LessonName,
+              teacher: `${lesson.TeacherTitle} ${lesson.TeacherName}`,
+              vize,
+              final,
+              butunleme,
+              average: avg
+            };
+
+          } catch (e) {
+            console.error(`Ders detayı hatası (${lesson.LessonCode}):`, e);
+            return {
+              id: lesson.ClassId,
+              code: lesson.LessonCode,
+              name: lesson.LessonName,
+              teacher: `${lesson.TeacherTitle} ${lesson.TeacherName}`,
+              vize: "-", final: "-", butunleme: "-", average: "-"
+            };
+          }
+        })
+      );
+
+      setCourses(combinedData);
+
+    } catch (error: any) {
+      console.error("Veri çekme hatası:", error);
+      Alert.alert("Hata", "Veriler alınırken bir sorun oluştu.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    // Buraya API isteği gelecek:
-    // fetch('https://mobil.kastamonu.edu.tr/api/.../GetGrades', ...)
-    
-    // (Simülasyon)
-    setTimeout(() => {
-      setCourses([
-        { id: '1', code: 'BIL301', name: 'Yazılım Mühendisliği', midterm: 85, final: 90, average: 88, letterGrade: 'AA', passed: true },
-        { id: '2', code: 'BIL305', name: 'Web Programlama', midterm: 70, final: 60, average: 64, letterGrade: 'CC', passed: true },
-        { id: '3', code: 'MAT201', name: 'Diferansiyel Denklemler', midterm: 40, final: 30, average: 34, letterGrade: 'FF', passed: false },
-        { id: '4', code: 'BIL307', name: 'Mobil Uygulama Geliştirme', midterm: 95, final: 85, average: 89, letterGrade: 'AA', passed: true },
-        { id: '5', code: 'ISL101', name: 'İşletmeye Giriş', midterm: 60, final: 75, average: 69, letterGrade: 'CB', passed: true },
-      ]);
-      setLoading(false);
-    }, 1000);
+    fetchCoursesAndGrades();
   }, []);
 
-  const renderItem = ({ item }: { item: CourseData }) => (
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchCoursesAndGrades();
+  };
+
+  const renderItem = ({ item }: { item: DisplayCourse }) => (
     <View className="bg-white rounded-2xl p-4 mb-4 border border-slate-200 shadow-sm">
-      {/* Ders Başlığı */}
-      <View className="flex-row justify-between items-start mb-3 border-b border-slate-100 pb-2">
-        <View className="flex-1">
-          <Text className="text-blue-600 font-bold text-xs">{item.code}</Text>
-          <Text className="text-slate-800 font-bold text-base">{item.name}</Text>
+      <View className="border-b border-slate-100 pb-3 mb-3">
+        <View className="flex-row justify-between items-start">
+            <View className="flex-1">
+                <Text className="text-blue-600 font-bold text-xs mb-0.5">{item.code}</Text>
+                <Text className="text-slate-900 font-bold text-base leading-tight">{item.name}</Text>
+            </View>
         </View>
-        <View className={`px-2 py-1 rounded-lg ${item.passed ? 'bg-green-100' : 'bg-red-100'}`}>
-           <Text className={`font-bold text-xs ${item.passed ? 'text-green-700' : 'text-red-700'}`}>
-             {item.letterGrade}
-           </Text>
+        <View className="flex-row items-center mt-2">
+            <UserIcon size={14} color="#64748b" />
+            <Text className="text-slate-500 text-xs ml-1.5 font-medium">{item.teacher}</Text>
         </View>
       </View>
 
-      {/* Notlar */}
       <View className="flex-row justify-between items-center">
         <View className="items-center flex-1 border-r border-slate-100">
-          <Text className="text-slate-400 text-xs font-medium uppercase">{dictionary.midterm}</Text>
-          <Text className="text-slate-900 font-bold text-lg">{item.midterm}</Text>
+          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{dictionary.midterm}</Text>
+          <Text className={`text-lg font-bold ${item.vize !== "-" ? "text-slate-800" : "text-slate-300"}`}>{item.vize}</Text>
         </View>
-        
         <View className="items-center flex-1 border-r border-slate-100">
-          <Text className="text-slate-400 text-xs font-medium uppercase">{dictionary.final}</Text>
-          <Text className="text-slate-900 font-bold text-lg">{item.final}</Text>
+          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{dictionary.final}</Text>
+          <Text className={`text-lg font-bold ${item.final !== "-" ? "text-slate-800" : "text-slate-300"}`}>{item.final}</Text>
         </View>
-
         <View className="items-center flex-1">
-          <Text className="text-slate-400 text-xs font-medium uppercase">{dictionary.average}</Text>
-          <Text className={`font-bold text-lg ${item.passed ? 'text-slate-900' : 'text-red-600'}`}>
-            {item.average}
-          </Text>
+          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{dictionary.average}</Text>
+          <View className={`px-2 py-0.5 rounded ${item.average !== "-" ? (parseFloat(item.average) >= 50 ? "bg-green-100" : "bg-red-100") : ""}`}>
+             <Text className={`text-lg font-bold ${item.average !== "-" ? (parseFloat(item.average) >= 50 ? "text-green-700" : "text-red-700") : "text-slate-300"}`}>{item.average}</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -81,33 +206,26 @@ export const CourseListScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
-      {/* Header */}
       <View className="px-4 py-3 bg-white border-b border-slate-100 flex-row items-center justify-between shadow-sm z-10">
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()}
-          className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center border border-slate-100"
-        >
+        <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center border border-slate-100">
           <ArrowLeft size={20} color="#334155" />
         </TouchableOpacity>
-        
         <Text className="text-lg font-bold text-slate-800">{dictionary.myCourses}</Text>
-        
-        <View className="w-10 items-center">
-             <GraduationCap size={24} color="#2563eb" />
-        </View>
+        <View className="w-10 items-center"><GraduationCap size={24} color="#2563eb" /></View>
       </View>
 
-      {/* İçerik */}
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#2563eb" />
+          <Text className="text-slate-400 text-xs mt-2">Dersler yükleniyor...</Text>
         </View>
       ) : (
         <FlatList
           data={courses}
           renderItem={renderItem}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={
             <View className="items-center justify-center mt-20">
               <Text className="text-slate-400">Ders kaydı bulunamadı.</Text>

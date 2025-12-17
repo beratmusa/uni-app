@@ -55,6 +55,8 @@ const translations = {
     status: "Durum",
     passed: "Geçti",
     failed: "Kaldı",
+    attendanceOperations: "Yoklama İşlemleri",
+    instructorLogin: "Akademisyen Girişi",
     categories: {
       all: "Tümü",
       student: "Öğrenci",
@@ -115,6 +117,8 @@ const translations = {
     status: "Status",
     passed: "Passed",
     failed: "Failed",
+    attendanceOperations: "Attendance Operations",
+    instructorLogin: "Instructor Login",
     categories: {
       all: "All",
       student: "Student",
