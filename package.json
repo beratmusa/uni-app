@@ -28,10 +28,12 @@
     "nativewind": "latest",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-qrcode-svg": "^6.3.21",
     "react-native-reanimated": "~4.1.1",
     "react-native-render-html": "^6.3.4",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-svg": "^15.15.1",
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
     "tailwind-merge": "^3.4.0"

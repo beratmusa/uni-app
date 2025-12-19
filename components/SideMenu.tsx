@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,Briefcase} from 'lucide-react-native';
+import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,Briefcase,IdCard} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import { useLanguage } from '../context/LanguageContext';
@@ -225,6 +225,21 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                     <View className="opacity-60 text-gray-700"><User size={20} /></View>
                     <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.login}</Text>
                     <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+                  </TouchableOpacity>
+                )}
+
+                {/* --- ÖĞRENCİ KİMLİK KARTI BUTONU --- */}
+                {isStudent && (
+                  <TouchableOpacity 
+                    onPress={() => navigation.navigate('StudentID')}
+                    className="flex-row items-center p-4 rounded-xl mb-2 active:bg-slate-50"
+                  >
+                    <View className="w-10 h-10 rounded-full bg-red-50 items-center justify-center mr-3">
+                      <IdCard size={20} color="#dc2626" />
+                    </View>
+                    <Text className="text-slate-700 font-bold text-base">
+                      {dictionary.myIdCard}
+                    </Text>
                   </TouchableOpacity>
                 )}
 

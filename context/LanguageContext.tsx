@@ -57,6 +57,17 @@ const translations = {
     failed: "Kaldı",
     attendanceOperations: "Yoklama İşlemleri",
     instructorLogin: "Akademisyen Girişi",
+    myIdCard: "Kimlik Kartım",
+    idCard: {
+    title: "Dijital Kimlik",
+    uniName: "KASTAMONU ÜNİVERSİTESİ",
+    cardType: "ÖĞRENCİ KİMLİK KARTI",
+    studentNo: "Öğrenci No",
+    tcNo: "T.C. Kimlik No",
+    faculty: "Fakülte / Bölüm",
+    active: "Aktif Öğrenci",
+    scan: "Doğrulama için okutunuz"
+  },
     categories: {
       all: "Tümü",
       student: "Öğrenci",
@@ -119,6 +130,17 @@ const translations = {
     failed: "Failed",
     attendanceOperations: "Attendance Operations",
     instructorLogin: "Instructor Login",
+    myIdCard: "My ID Card",
+    idCard: {
+    title: "Digital ID",
+    uniName: "KASTAMONU UNIVERSITY",
+    cardType: "STUDENT ID CARD",
+    studentNo: "Student No",
+    tcNo: "TR ID No",
+    faculty: "Faculty / Dept",
+    active: "Active Student",
+    scan: "Scan for verification"
+  },
     categories: {
       all: "All",
       student: "Student",
