@@ -11,6 +11,7 @@ import { AuthProvider } from './context/AuthContext';
 import { LoginScreen } from './screens/LoginScreen';
 import { QRScannerScreen } from './screens/QRScannerScreen';
 import { CourseListScreen } from './screens/CourseListScreen';
+import { StudentIDScreen } from './screens/StudentIDScreen';
 
 const Stack = createNativeStackNavigator();
 // Bu ayar katı modu kapatır ve gereksiz uyarıyı engeller
@@ -54,6 +55,12 @@ const AppNavigator = () => {
           name="CourseList" 
           component={CourseListScreen} 
           options={{ animation: 'slide_from_right' }} 
+        />
+
+        <Stack.Screen 
+          name="StudentID" 
+          component={StudentIDScreen} 
+          options={{ headerShown: false }} 
         />
 
       </Stack.Navigator>
