@@ -238,7 +238,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                       <IdCard size={20} color="#dc2626" />
                     </View>
                     <Text className="text-slate-700 font-bold text-base">
-                      Kimlik Kartım
+                      {dictionary.myIdCard}
                     </Text>
                   </TouchableOpacity>
                 )}
