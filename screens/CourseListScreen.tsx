@@ -53,14 +53,12 @@ export const CourseListScreen = () => {
       console.log("📚 Ders listesi çekiliyor (POST)...");
       const cleanToken = token.trim();
 
-      // 1. ADIM: Ders Listesi (POST İsteği)
       const lessonResponse = await fetch('https://mobil.kastamonu.edu.tr/api/Student/GetStudentLessonInfo', {
-        method: 'POST', // <-- DEĞİŞİKLİK: POST yapıldı
+        method: 'POST', 
         headers: {
           'Authorization': `Bearer ${cleanToken}`,
-          // 'Cookie': 'ASP.NET_SessionId=...' // Gerekirse cookie yönetimi eklenir ama genelde Token yeterlidir.
         },
-        body: '' // Postman'deki raw="" kısmı
+        body: '' 
       });
 
       if (!lessonResponse.ok) {
@@ -78,20 +76,17 @@ export const CourseListScreen = () => {
         return;
       }
 
-      // 2. ADIM: Notları Çek (POST İsteği ve JSON Body ile)
       const combinedData = await Promise.all(
         lessonList.map(async (lesson) => {
           try {
-            // URL sonunda slash var, Postman koduna sadık kalalım
             const examUrl = 'https://mobil.kastamonu.edu.tr/api/Student/GetStudentExamInfo/'; 
             
             const examResponse = await fetch(examUrl, {
-              method: 'POST', // <-- DEĞİŞİKLİK: POST yapıldı
+              method: 'POST',
               headers: {
                 'Authorization': `Bearer ${cleanToken}`,
-                'Content-Type': 'application/json' // JSON gönderdiğimiz için şart
+                'Content-Type': 'application/json'
               },
-              // <-- DEĞİŞİKLİK: classId Body içinde gönderiliyor
               body: JSON.stringify({
                 "classId": lesson.ClassId 
               })
@@ -106,7 +101,6 @@ export const CourseListScreen = () => {
               const exams: ExamRaw[] = examJson.Data || [];
 
               exams.forEach(exam => {
-                // Not null ise string'e çevir
                 const result = exam.ExamResult !== null ? exam.ExamResult.toString() : "-";
                 const name = exam.SharedExamName ? exam.SharedExamName.toLowerCase() : "";
                 
@@ -116,7 +110,6 @@ export const CourseListScreen = () => {
               });
             }
 
-            // Ortalama Hesabı (Basit)
             let avg = "-";
             if (vize !== "-" && final !== "-") {
                 const v = parseFloat(vize);

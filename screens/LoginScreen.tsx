@@ -8,15 +8,13 @@ const LOGIN_URL = 'https://ubys.kastamonu.edu.tr/Framework/Integration/Authentic
  
 
 export const LoginScreen = () => {
-  // validateToken fonksiyonunu da çekiyoruz
   const { login, validateToken } = useAuth(); 
   const navigation = useNavigation<any>();
-  const [isValidating, setIsValidating] = useState(false); // Doğrulama sırasında loading göstermek için
+  const [isValidating, setIsValidating] = useState(false); 
   
   const handleNavigationStateChange = async (newNavState: WebViewNavigation) => {
     const { url } = newNavState;
     
-    // Token Yakalama Mantığı
     if (url.includes('sorgu.kastamonu.edu.tr') && url.includes('token=')) {
       
       const match = url.match(/[?&]token=([^&#]*)/);
@@ -25,22 +23,18 @@ export const LoginScreen = () => {
         const capturedToken = match[1];
         console.log("🔥 TOKEN YAKALANDI, DOĞRULANIYOR...", capturedToken);
 
-        // Webview'i durdurup loading gösterelim
         setIsValidating(true);
 
-        // 1. Token'ı Sunucuda Doğrula
         const isValid = await validateToken(capturedToken);
 
         if (isValid) {
-            // 2. Başarılıysa Giriş Yap
             console.log("✅ Token doğrulandı, giriş yapılıyor.");
             await login(capturedToken);
             navigation.goBack();
         } else {
-            // 3. Başarısızsa Hata Ver
             console.log("❌ Token doğrulanamadı.");
             Alert.alert("Giriş Hatası", "Oturum doğrulanamadı. Lütfen tekrar deneyin.");
-            setIsValidating(false); // Loading'i kapat, kullanıcı tekrar deneyebilsin
+            setIsValidating(false);
         }
       }
     }
@@ -49,7 +43,6 @@ export const LoginScreen = () => {
   return (
     <View style={styles.container}>
       {isValidating ? (
-        // Doğrulama yapılıyorken tam ekran loading
         <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#2563eb" />
         </View>

@@ -17,7 +17,6 @@ export const PdfModal = ({ visible, url, title = "Doküman", onClose }: PdfModal
   if (!url) return null;
 
   // ANDROID İÇİN PDF HİLESİ:
-  // Android WebView direkt PDF açamaz, Google Docs Viewer üzerinden açıyoruz.
   const finalUrl = Platform.OS === 'android' && url.endsWith('.pdf')
     ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`
     : url;
@@ -44,7 +43,6 @@ export const PdfModal = ({ visible, url, title = "Doküman", onClose }: PdfModal
             {title}
           </Text>
 
-          {/* Görsel denge için boş veya paylaş butonu */}
           <View className="w-10" /> 
         </View>
 

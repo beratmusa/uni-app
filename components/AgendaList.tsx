@@ -30,10 +30,8 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
     return date.getDate();
   };
 
-  // --- TARİH DÜZELTMESİ ---
   const getMonth = (dateString: string) => {
     const date = new Date(dateString);
-    // Dil TR ise Türkçe, değilse İngilizce ay ismi döndür
     return date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { month: 'short' }).toUpperCase();
   };
 
@@ -75,7 +73,7 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
         </View>
         
         <TouchableOpacity 
-          onPress={() => navigation.navigate('AgendaList')} // <-- Yönlendirme eklendi
+          onPress={() => navigation.navigate('AgendaList')}
           className="bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm"
         >
           <Text className="text-slate-700 text-xs font-bold">{dictionary.seeAll}</Text>
@@ -104,7 +102,7 @@ export const AgendaList = ({ data, onItemClick }: AgendaListProps) => {
                   {getDay(item.eklemeZamani)}
                 </Text>
                 <Text className="text-[11px] font-extrabold text-blue-700 uppercase tracking-wider">
-                  {getMonth(item.eklemeZamani)} {/* ARTIK DİNAMİK */}
+                  {getMonth(item.eklemeZamani)} 
                 </Text>
               </View>
             </View>

@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, Image, Dimensions } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
-import { useLanguage } from '../context/LanguageContext'; // <-- HOOK
+import { useLanguage } from '../context/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
 const HERO_HEIGHT = height * 0.40;
@@ -8,7 +8,7 @@ const HERO_HEIGHT = height * 0.40;
 export interface SlaytItem { 
   id: number; 
   baslikTR: string; 
-  baslikEN?: string; // <-- EKLENDİ
+  baslikEN?: string;
   pathTR: string; 
 }
 
@@ -17,7 +17,7 @@ interface HeroSliderProps {
 }
 
 export const HeroSlider = ({ data }: HeroSliderProps) => {
-  const { language } = useLanguage(); // <-- DİL
+  const { language } = useLanguage();
 
   const slaytlar = data.filter(item => 
     item.pathTR && item.pathTR.toLowerCase().endsWith('.mp4')

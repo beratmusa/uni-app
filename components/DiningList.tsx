@@ -67,12 +67,10 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
   if (!data || data.length === 0) return null;
 
   return (
-    // Üstten boşluk (mt-8) korundu
     <View className="flex-1 mt-14 mb-8" onLayout={onLayout}>
       
       {/* 1. ÜST KISIM (TAB) */}
       <View className="flex-row h-[70px]">
-        {/* Genişlik (w-[45%]) korundu */}
         <View className="w-[45%] bg-orange-600 rounded-tr-[30px] justify-center pl-6">
             <Text className="text-white text-xl font-bold tracking-wider" numberOfLines={1}>
               {dictionary.dining || "Günün Menüsü"}
@@ -156,7 +154,6 @@ export const DiningList = ({ data, onLayout }: DiningListProps) => {
                                 key={index} 
                                 className="bg-white/10 border border-white/20 p-3 rounded-2xl"
                             >
-                                {/* DEĞİŞİKLİK BURADA YAPILDI: Yan yana ve tire ile */}
                                 <Text className="text-white font-bold text-sm leading-5">
                                     {name}
                                     {cal ? (

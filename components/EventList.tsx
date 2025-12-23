@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 export interface EtkinlikItem {
   id: number;
   baslikTR: string;
-  baslikEN?: string; // <-- EKLENDİ
+  baslikEN?: string;
   baslamaZamani: string;
   bitisZamani: string;
   pathTR: string;
@@ -25,12 +25,11 @@ const SPACING = 16;
 const SNAP_INTERVAL = CARD_WIDTH + SPACING;
 
 export const EventList = ({ data, onItemClick }: EventListProps) => {
-  const { language, dictionary } = useLanguage(); // <-- DİL
+  const { language, dictionary } = useLanguage();
   const scrollRef = useRef<ScrollView>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigation = useNavigation<any>();
 
-  // ... (Otomatik kaydırma useEffect kodu aynı kalacak) ...
   useEffect(() => {
     if (data.length === 0) return;
     const interval = setInterval(() => {
@@ -53,13 +52,11 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
 
   const getMonth = (dateString: string) => {
     const date = new Date(dateString);
-    // Locale dinamik yapıldı
     return date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { month: 'long' }).toUpperCase();
   };
 
   const getShortMonth = (dateString: string) => {
     const date = new Date(dateString);
-    // Locale dinamik yapıldı
     return date.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { month: 'short' }).toUpperCase();
   };
 
@@ -85,7 +82,7 @@ export const EventList = ({ data, onItemClick }: EventListProps) => {
             </Text>
 
             <TouchableOpacity 
-              onPress={() => navigation.navigate('EventList')} // Yönlendirme
+              onPress={() => navigation.navigate('EventList')}
               className="bg-white/80 px-3 py-1.5 rounded-full border border-stone-300 shadow-sm"
             >
               <Text className="text-stone-600 text-[10px] font-bold">

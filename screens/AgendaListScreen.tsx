@@ -133,14 +133,13 @@ export const AgendaListScreen = ({ navigation }: any) => {
     }
   };
 
-  // --- KART TASARIMI (ESKİ / STANDART HALİ) ---
+  // --- KART TASARIMI ---
   const renderItem = ({ item }: { item: GenericItem }) => (
     <TouchableOpacity 
       onPress={() => handleItemPress(item)}
       className="bg-white rounded-xl mb-3 shadow-sm border border-slate-100 flex-row h-28 overflow-hidden"
     >
-       {/* SOL TARAF: RESİM KONTROLÜ */}
-       {/* Eğer item.image (resim url) varsa Image bileşenini göster */}
+
        {item.image ? (
          <Image 
            source={{ uri: item.image }} 
@@ -148,7 +147,6 @@ export const AgendaListScreen = ({ navigation }: any) => {
            resizeMode="cover"
          />
        ) : (
-         /* Resim yoksa (null ise) gri bir kutu ve takvim ikonu göster */
          <View className="w-32 h-full bg-slate-200 items-center justify-center">
             <Calendar size={32} color="#94a3b8" />
          </View>
@@ -248,7 +246,7 @@ export const AgendaListScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* LİSTE (SADELEŞTİRİLMİŞ KARTLAR) */}
+      {/* LİSTE */}
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#2563eb" />

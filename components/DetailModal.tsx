@@ -31,15 +31,12 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [imageHeight, setImageHeight] = useState(250);
 
-  // --- DÜZELTME BURADA ---
-  // Data değiştiğinde (yeni bir şeye tıklandığında):
-  // 1. Eğer yeni verinin resmi varsa onu aktif yap.
-  // 2. Eğer resmi YOKSA (örn: duyuru), activeImage'i NULL yap (eski resmi temizle).
+
   useEffect(() => {
     setActiveImage(data?.image || null);
   }, [data]);
 
-  // Resim değiştiğinde boyutunu hesapla
+  // Resim değiştiğinde boyut hesaplama
   useEffect(() => {
     if (activeImage) {
       Image.getSize(activeImage, (w, h) => {
@@ -103,7 +100,6 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
         {/* İÇERİK */}
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false} bounces={false}>
           
-          {/* 1. AKILLI RESİM ALANI (Sadece aktif resim varsa göster) */}
           {activeImage && (
             <View className="w-full bg-gray-50 relative">
               <Image 
@@ -116,7 +112,7 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
 
           <View className="p-5 pb-20">
 
-            {/* 2. GALERİ (Birden fazla resim varsa göster) */}
+            {/* 2. GALERİ */}
             {allImages.length > 1 && (
               <View className="mb-6">
                 <ScrollView 

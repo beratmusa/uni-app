@@ -7,23 +7,24 @@ interface Application {
   ContextId: number;
   Uri: string;
   Enabled: boolean;
-  Name: string; // <-- Bizi ilgilendiren kısım burası
+  Name: string;
 }
 
-// 2. UserInfo Modeli (Applications dizisi eklendi)
+// 2. UserInfo Modeli
 interface UserInfo {
   Id: number;
   Email: string;
   PersonId: number;
   TitleNameSurname: string; 
   Image: string | null;     
-  Applications: Application[]; // <-- API'den gelen liste
+  Applications: Application[];
 }
 
 interface AuthContextType {
   token: string | null;
   userInfo: UserInfo | null;
-  isStudent: boolean; // <-- Rol durumu
+  isStudent: boolean;     
+  isInstructor: boolean;   
   isLoading: boolean;
   login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -36,7 +37,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [isStudent, setIsStudent] = useState<boolean>(true); // Varsayılan true
+  const [isStudent, setIsStudent] = useState<boolean>(false);
+  const [isInstructor, setIsInstructor] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // --- KULLANICI BİLGİLERİNİ ÇEKME ---
@@ -60,17 +62,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // --- ROL KONTROLÜ (SADECE APPLICATION NAME İLE) ---
         let studentStatus = false;
+        let instructorStatus = false;
 
         if (data.Applications && Array.isArray(data.Applications)) {
-          // Dizinin içinde Name alanı "Öğrenci Mobil" içeren bir öğe var mı?
           studentStatus = data.Applications.some((app: Application) => 
             app.Name.includes("Öğrenci Mobil")
           );
+          instructorStatus = data.Applications.some((app: Application) => 
+            app.Name.includes("Öğretim Üyesi Mobil")
+          );
         }
 
-        console.log("🎓 Tespit Edilen Rol:", studentStatus ? "Öğrenci" : "Akademisyen");
+        console.log(`🎓 Rol Tespiti -> Öğrenci: ${studentStatus}, Eğitmen: ${instructorStatus}`);
 
         setIsStudent(studentStatus);
+        setIsInstructor(instructorStatus);
         setUserInfo(data);
         return true; 
       } else {
@@ -83,7 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // --- TOKEN DOĞRULAMA (Değişiklik Yok) ---
+  // --- TOKEN DOĞRULAMA ---
   const validateToken = async (tokenToCheck: string): Promise<boolean> => {
     try {
       const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/ServiceCaller/Auth', {
@@ -94,14 +100,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           serviceCriteria: { Token: tokenToCheck }
         }),
       });
-      // ... (Geri kalan aynı)
       const responseText = await response.text();
       if (responseText.toLowerCase() === 'true' || responseText.includes('true')) return true;
       return false; 
     } catch (error) { return false; }
   };
 
-  // --- UYGULAMA AÇILIŞI (Değişiklik Yok) ---
+  // --- UYGULAMA AÇILIŞI ---
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -139,7 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, userInfo, isStudent, isLoading, login, logout, validateToken, fetchUserInfo }}>
+    <AuthContext.Provider value={{ token, userInfo, isStudent,isInstructor, isLoading, login, logout, validateToken, fetchUserInfo }}>
       {children}
     </AuthContext.Provider>
   );
