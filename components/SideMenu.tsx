@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,Briefcase,IdCard} from 'lucide-react-native';
+import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,Briefcase,IdCard,Plus} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import { useLanguage } from '../context/LanguageContext';
@@ -28,7 +28,7 @@ interface SideMenuProps {
 
 export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideMenuProps) => {
   const { language, setLanguage, dictionary } = useLanguage();
-  const { token,userInfo,isStudent ,logout } = useAuth();
+  const { token,userInfo,isStudent,isInstructor ,logout } = useAuth();
   const navigation = useNavigation<any>();
   const [isCalendarOpen, setCalendarOpen] = useState(false);
   const [isAttendanceOpen, setAttendanceOpen] = useState(false);
@@ -42,6 +42,20 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const [webViewUrl, setWebViewUrl] = useState<string | null>(null);
   const [webViewTitle, setWebViewTitle] = useState("");
   const [codeModalVisible, setCodeModalVisible] = useState(false);
+
+  const isBoth = isStudent && isInstructor;
+  const isOnlyInstructor = isInstructor && !isStudent;
+  const isOnlyStudent = isStudent && !isInstructor;
+  if (!isStudent && !isInstructor) return null;
+
+  const t = dictionary.sideMenu || {
+    academicTitle: "AKADEMİK İŞLEMLER",
+    attendance: "Yoklama ve Dersler",
+    joinQr: "QR ile Katıl",
+    joinCode: "Kod ile Katıl",
+    createCourse: "Ders Aç (Eğitmen)",
+    instructorOps: "Yoklama İşlemleri"
+  };
 
   const handleDiningClick = () => {
     onClose(); 
@@ -67,8 +81,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
   const handleUbysClick = () => {
     if (token) {
-      // 1. Token VARSA: Linki oluştur ve WebView'da aç
-      // Link: .../Login?authToken=YAKALANAN_TOKEN
       const targetUrl = `${UBYS_BASE_URL}${token}`;
       console.log("UBYS Açılıyor:", targetUrl);
       
@@ -81,12 +93,11 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   };
 
   const handleQRClick = () => {
-    onClose(); // Menüyü kapat
-    navigation.navigate('QRScanner'); // QR Ekranına git
+    onClose();
+    navigation.navigate('QRScanner');
   };
 
   const handleCodeSubmit = async (code: string) => {
-    // 1. Token kontrolü (Giriş yapılmış mı?)
     if (!token) {
       alert("Lütfen önce giriş yapınız.");
       return;
@@ -152,7 +163,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
               {/* PROFİL KARTI */}
               <View className="flex-row items-center mb-8 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <View className={`w-12 h-12 rounded-full items-center justify-center overflow-hidden border-2 border-white shadow-sm ${isStudent ? 'bg-blue-600' : 'bg-orange-600'}`}>
+                <View className={`w-12 h-12 rounded-full items-center justify-center overflow-hidden border-2 border-white shadow-sm ${token ? (isStudent ? 'bg-blue-600' : 'bg-orange-600') : 'bg-slate-400'}`}>
                     {token && userInfo?.Image ? (
                       <Image 
                         source={{ uri: `data:image/jpeg;base64,${userInfo.Image}` }} 
@@ -160,24 +171,27 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                       />
                     ) : (
                       <Text className="text-white font-bold text-lg">
-                        {token && userInfo?.TitleNameSurname ? userInfo.TitleNameSurname.charAt(0).toUpperCase() : (token ? "✓" : "Ö")}
+                        {token && userInfo?.TitleNameSurname 
+                            ? userInfo.TitleNameSurname.charAt(0).toUpperCase() 
+                            : (token ? "✓" : <User size={24} color="white" />)
+                        }
                       </Text>
                     )}
                 </View>
                 <View className="ml-3 flex-1">
                     <Text className="font-bold text-gray-900 text-sm" numberOfLines={1}>
-                        {token && userInfo ? userInfo.TitleNameSurname : dictionary.studentLogin}
+                        {token && userInfo ? userInfo.TitleNameSurname : dictionary.guestUser}
                     </Text>
-                    <Text className={`text-xs font-medium ${isStudent ? 'text-blue-600' : 'text-orange-600'}`}>
+                    <Text className={`text-xs font-medium ${token ? (isStudent ? 'text-blue-600' : 'text-orange-600') : 'text-slate-500'}`}>
                         {token 
-                          ? (isStudent ? dictionary.studentLogin : dictionary.instructorLogin) // Rolü yazdırıyoruz
-                          : dictionary.notLoggedIn
+                          ? (isStudent ? dictionary.studentLogin : dictionary.instructorLogin) 
+                          : dictionary.welcome
                         }
                     </Text>
                 </View>
               </View>
 
-              {/* --- MODERN DİL SEÇİMİ (SEGMENTED CONTROL) --- */}
+              {/* --- DİL SEÇİMİ (SEGMENTED CONTROL) --- */}
               <View className="flex-row bg-slate-100 p-1.5 rounded-2xl mb-8 border border-slate-200">
                 
                 <TouchableOpacity 
@@ -228,8 +242,8 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   </TouchableOpacity>
                 )}
 
-                {/* --- ÖĞRENCİ KİMLİK KARTI BUTONU --- */}
-                {isStudent && (
+                {/* --- KİMLİK KARTI BUTONU --- */}
+                {token && (
                   <TouchableOpacity 
                     onPress={() => navigation.navigate('StudentID')}
                     className="flex-row items-center p-4 rounded-xl mb-2 active:bg-slate-50"
@@ -243,11 +257,22 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   </TouchableOpacity>
                 )}
 
-                {/* --- YOKLAMA BÖLÜMÜ --- */}
+                {/* 3. DERSLERİM BUTONU (Sadece Öğrenciler ve Hem Hoca Hem Öğrenciler Görür) */}
+                {token && isStudent && (
+                  <TouchableOpacity 
+                      onPress={() => { onClose(); navigation.navigate('CourseList'); }} 
+                      className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100"
+                  >
+                    <View className="opacity-60 text-gray-700"><BookOpen size={20} /></View>
+                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.myCourses}</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* 4. YOKLAMA VE İŞLEMLER (LOGIC BURADA) */}
                 {token && (
                   <View>
+                    {/* DURUM A: ÖĞRENCİ VEYA HEM ÖĞRENCİ HEM HOCA (Dropdown Menü) */}
                     {isStudent ? (
-                      // 1. ÖĞRENCİ GÖRÜNÜMÜ (Accordion Menü)
                       <View>
                         <TouchableOpacity 
                           onPress={() => setAttendanceOpen(!isAttendanceOpen)} 
@@ -262,54 +287,63 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                           {isAttendanceOpen ? <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />}
                         </TouchableOpacity>
 
+                        {/* Açılır Menü İçeriği */}
                         {isAttendanceOpen && (
                           <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
+                            
+                            {/* Herkes İçin: Kod ile Katıl */}
                             <TouchableOpacity onPress={() => setCodeModalVisible(true)} className="flex-row items-center p-3 rounded-lg active:bg-blue-50">
                               <Keyboard size={16} color="#64748b" className="mr-3" />
                               <Text className="text-gray-600 font-medium text-sm">{dictionary.joinWithCode}</Text>
                               <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
                             </TouchableOpacity>
 
+                            {/* Herkes İçin: QR ile Katıl */}
                             <TouchableOpacity onPress={handleQRClick} className="flex-row items-center p-3 rounded-lg active:bg-blue-50">
                               <QrCode size={16} color="#64748b" className="mr-3" />
                               <Text className="text-gray-600 font-medium text-sm">{dictionary.joinWithQR}</Text>
                               <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
                             </TouchableOpacity>
+
+                            {/* EKSTRA: Eğer Hem Öğrenci Hem Hocaysa "Ders Aç" Butonu Görünür */}
+                            {isInstructor && (
+                                <TouchableOpacity 
+                                    onPress={() => { onClose(); navigation.navigate('CreateCourseScreen'); }} 
+                                    className="flex-row items-center p-3 rounded-lg active:bg-red-50 mt-1"
+                                >
+                                    <View className="bg-red-100 p-1 rounded mr-3">
+                                        <Plus size={14} color="#dc2626" />
+                                    </View>
+                                    <Text className="text-red-600 font-bold text-sm">
+                                        {t.createCourse || "Ders Aç (Eğitmen)"}
+                                    </Text>
+                                    <ChevronRight size={12} color="#dc2626" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                </TouchableOpacity>
+                            )}
+
                           </View>
                         )}
                       </View>
                     ) : (
-                      // 2. AKADEMİSYEN GÖRÜNÜMÜ (Tek Buton)
+                      // DURUM B: SADECE HOCA (Tek Buton)
                       <TouchableOpacity 
                           onPress={handleInstructorAttendance}
                           className="flex-row items-center p-4 rounded-xl active:bg-orange-50 border border-transparent active:border-orange-100"
                       >
                         <View className="opacity-60 text-gray-700"><Briefcase size={20} /></View>
-                        <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.attendanceOperations}</Text>
+                        <Text className="ml-3 font-semibold text-gray-700 text-base">
+                            {t.instructorOps || "Yoklama İşlemleri"}
+                        </Text>
                         <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
                       </TouchableOpacity>
                     )}
                   </View>
-                )}
-
-                {/* --- DERSLERİM BUTONU --- */}
-                {/* Sadece token varsa (giriş yapıldıysa) göster */}
-                {token && isStudent && (
-                  <TouchableOpacity 
-                      onPress={() => { onClose(); navigation.navigate('CourseList'); }} 
-                      className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100"
-                  >
-                    <View className="opacity-60 text-gray-700"><BookOpen size={20} /></View>
-                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.myCourses}</Text>
-                    <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
-                  </TouchableOpacity>
                 )}
                 
                 {/* 2. YEMEK LİSTESİ */}
                 <TouchableOpacity onPress={handleDiningClick} className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100">
                     <View className="opacity-60 text-gray-700"><Utensils size={20} /></View>
                     <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.dining}</Text>
-                    <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
 
                 
@@ -325,19 +359,19 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   {isCalendarOpen && (
                     <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
                       <SubMenuLink 
-                        title={dictionary.calendarGeneral} // DİNAMİK
+                        title={dictionary.calendarGeneral}
                         onPress={() => handleOpenPdf(PDF_LINKS.GENEL, dictionary.calendarGeneral)} 
                       />
                       <SubMenuLink 
-                        title={dictionary.calendarEn} // DİNAMİK
+                        title={dictionary.calendarEn} 
                         onPress={() => handleOpenPdf(PDF_LINKS.ACADEMİC_Calendar_EN, "Academic Calendar")} 
                       />
                       <SubMenuLink 
-                        title={dictionary.calendarMedicine} // DİNAMİK
+                        title={dictionary.calendarMedicine} 
                         onPress={() => handleOpenPdf(PDF_LINKS.TIP, dictionary.calendarMedicine)} 
                       />
                       <SubMenuLink 
-                        title={dictionary.calendarVet} // DİNAMİK
+                        title={dictionary.calendarVet}
                         onPress={() => handleOpenPdf(PDF_LINKS.VETERINER, dictionary.calendarVet)} 
                       />
                     </View>
@@ -347,28 +381,26 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                 {/* 5. İLETİŞİM */}
                 <TouchableOpacity onPress={handleContactClick} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
                     <View className="opacity-60 text-gray-700"><Phone size={20} /></View>
-                    {/* DİNAMİK: İletişim & Rehber */}
                     <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.contactGuide}</Text>
-                    <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
 
               </View>
 
               {token && (
-        <View className="mt-auto border-t border-gray-100 pt-6 pb-6">
-            <TouchableOpacity 
-                onPress={() => { 
-                    logout(); 
-                    onClose(); 
-                }} 
-                className="flex-row items-center p-3 rounded-xl bg-red-50"
-            >
-                <LogOut size={20} color="#dc2626" />
-                <Text className="ml-3 font-bold text-red-600">{dictionary.logout}</Text>
-            </TouchableOpacity>
-                <Text className="text-center text-xs text-gray-400 mt-4">v1.0.0 - Kampüs App</Text>
-        </View>
-    )}
+                <View className="mt-auto border-t border-gray-100 pt-6 pb-6">
+                    <TouchableOpacity 
+                        onPress={() => { 
+                            logout(); 
+                            onClose(); 
+                        }} 
+                        className="flex-row items-center p-3 rounded-xl bg-red-50"
+                    >
+                        <LogOut size={20} color="#dc2626" />
+                        <Text className="ml-3 font-bold text-red-600">{dictionary.logout}</Text>
+                    </TouchableOpacity>
+                        <Text className="text-center text-xs text-gray-400 mt-4">v1.0.0 - Kampüs App</Text>
+                </View>
+              )}
 
             </View>
           </SafeAreaView>

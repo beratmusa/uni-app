@@ -23,10 +23,9 @@ export const QRScannerScreen = () => {
   }, []);
 
   const handleBarCodeScanned = async ({ type, data }: any) => {
-    if (scanned) return; // Tekrar tekrar okumasın diye
+    if (scanned) return; 
     setScanned(true);
 
-    // 1. Token Kontrolü
     if (!token) {
         Alert.alert("Hata", "Oturum süreniz dolmuş, lütfen tekrar giriş yapın.");
         navigation.goBack();
@@ -34,17 +33,16 @@ export const QRScannerScreen = () => {
     }
 
     try {
-        // QR verisini ekrana basmak yerine sunucuya gönderiyoruz
         console.log("QR Okundu, sunucuya gönderiliyor:", data);
 
         const response = await fetch('https://mobil.kastamonu.edu.tr/api/Yoklama/QrKatil', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`, // <-- KİMLİK
+                'Authorization': `Bearer ${token}`, 
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                qrData: data // QR'dan çıkan veri (Genelde şifreli bir string olur)
+                qrData: data 
             })
         });
 
@@ -90,7 +88,6 @@ export const QRScannerScreen = () => {
         style={StyleSheet.absoluteFillObject}
       />
       
-      {/* Kapatma Butonu */}
       <TouchableOpacity 
         onPress={() => navigation.goBack()}
         className="absolute top-12 right-6 bg-black/50 p-3 rounded-full"
@@ -98,7 +95,6 @@ export const QRScannerScreen = () => {
         <X size={24} color="white" />
       </TouchableOpacity>
 
-      {/* Tarama Alanı Göstergesi (Overlay) */}
       <View className="absolute inset-0 justify-center items-center">
         <View className="w-64 h-64 border-2 border-white/60 rounded-3xl bg-transparent" />
         <Text className="text-white mt-4 font-bold bg-black/40 px-4 py-2 rounded-full overflow-hidden">

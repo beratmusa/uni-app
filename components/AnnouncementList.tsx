@@ -21,7 +21,6 @@ interface AnnouncementListProps {
   onItemClick: (item: HaberItem) => void;
 }
 
-// GÖSTERİLECEK KATEGORİLER (Sıralama önemli)
 const RAW_CATEGORIES = [
   "Üniversite Haberleri", 
   "Birim Haberleri", 
@@ -29,7 +28,6 @@ const RAW_CATEGORIES = [
   "Öğrenci Duyuruları"
 ];
 
-// İNGİLİZCE ÇEVİRİLERİ
 const CATEGORY_TRANSLATIONS: Record<string, string> = {
   "Üniversite Haberleri": "University News",
   "Birim Haberleri": "Unit News",
@@ -38,7 +36,6 @@ const CATEGORY_TRANSLATIONS: Record<string, string> = {
   "Tümü": "All"
 };
 
-// RENK TEMALARI
 const CATEGORY_THEMES: Record<string, {
   bg: string;       
   text: string;     
@@ -77,7 +74,6 @@ export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) =
   const { language, dictionary } = useLanguage();
   const navigation = useNavigation<any>();
   
-  // DEĞİŞİKLİK: Varsayılan olarak "Üniversite Haberleri" seçili
   const [selectedCategory, setSelectedCategory] = useState("Üniversite Haberleri");
 
   const formatDate = (dateString: string) => {
@@ -105,13 +101,12 @@ export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) =
   
   const activeTheme = getTheme(selectedCategory);
 
-  // --- DİL ÇEVİRİSİ ---
   const getDisplayName = (originalName: string) => {
     if (language === 'tr') return originalName;
     return CATEGORY_TRANSLATIONS[originalName] || originalName;
   };
 
-  // --- METİN BÖLME ---
+  
   const splitTitle = (title: string) => {
     const parts = title.split(" ");
     if (parts.length < 2) return { first: title, second: "" };
@@ -121,7 +116,7 @@ export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) =
   return (
     <View className="mt-8 mx-4 rounded-3xl relative overflow-hidden bg-white shadow-sm border border-white/60">
       
-      {/* Arka Plan Gradyanı */}
+      
       <LinearGradient
         colors={activeTheme.gradient as any} 
         start={{ x: 0, y: 0 }}
@@ -145,7 +140,6 @@ export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) =
             </Text>
           </View>
 
-          {/* TÜMÜNÜ GÖR BUTONU (Sayfaya yönlendirir) */}
           <TouchableOpacity 
             onPress={() => navigation.navigate('AnnouncementList')} 
             className="px-3 py-1.5 rounded-full border bg-white/60 border-slate-200"
@@ -168,7 +162,6 @@ export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) =
               return (
                 <TouchableOpacity
                   key={kat}
-                  // DEĞİŞİKLİK: Tıklayınca sadece o kategoriyi seçer, seçimi kaldırmaz
                   onPress={() => setSelectedCategory(kat)}
                   className={`flex-1 py-2 px-0.5 rounded-xl border shadow-sm items-center justify-center min-h-[45px] ${
                     isActive 
@@ -202,7 +195,6 @@ export const AnnouncementList = ({ data, onItemClick }: AnnouncementListProps) =
               </Text>
             </View>
           ) : (
-            // Sadece ilk 5 tanesini göster
             filteredList.slice(0, 5).map((item) => {
               const itemTheme = getTheme(item.kategori);
               const displayCategory = getDisplayName(item.kategori);

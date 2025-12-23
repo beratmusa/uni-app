@@ -6,7 +6,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { DetailModal, DetailData } from '../components/DetailModal';
 import { GenericItem } from '../components/AllItemsPage';
 
-// API'den gelen veri tipi
 interface EtkinlikItem {
   id: number;
   baslikTR: string;
@@ -14,11 +13,10 @@ interface EtkinlikItem {
   icerikTR: string;
   baslamaZamani: string;
   bitisZamani?: string;
-  yerTR: string; // Etkinlik yeri
-  pathTR: string | null; // Resim
+  yerTR: string;
+  pathTR: string | null; 
 }
 
-// Filtre Seçeneği Tipi
 interface FilterOption {
   label: string;
   value: string;
@@ -56,7 +54,6 @@ export const EventListScreen = ({ navigation }: any) => {
       const formattedData: GenericItem[] = rawData.map(item => ({
         id: item.id,
         title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
-        // Tarihi string olarak formatlıyoruz
         date: new Date(item.baslamaZamani).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
         image: item.pathTR, 
         category: dictionary.events, 
@@ -72,7 +69,7 @@ export const EventListScreen = ({ navigation }: any) => {
     }
   };
 
-  // --- FİLTRE SEÇENEKLERİNİ OLUŞTURMA (AY/YIL) ---
+  // --- FİLTRE SEÇENEKLERİNİ OLUŞTURMA ---
   const filterOptions = useMemo(() => {
     const options: FilterOption[] = [
       { label: language === 'tr' ? 'Tüm Etkinlikler' : 'All Events', value: 'all' }
@@ -81,21 +78,19 @@ export const EventListScreen = ({ navigation }: any) => {
     const uniqueMonths = new Set<string>();
 
     allData.forEach(item => {
-      // Orijinal veriden tarihi al
       const rawItem = item.originalData as EtkinlikItem;
       const date = new Date(rawItem.baslamaZamani);
       
       const year = date.getFullYear();
       const month = date.getMonth(); // 0-11
-      const key = `${year}-${(month + 1).toString().padStart(2, '0')}`; // "2025-12"
+      const key = `${year}-${(month + 1).toString().padStart(2, '0')}`;
 
       if (!uniqueMonths.has(key)) {
         uniqueMonths.add(key);
         
-        // Ay İsimleri (Dil desteğiyle)
         const dateObj = new Date(year, month);
         const monthName = dateObj.toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', { month: 'long' });
-        const label = `${monthName} ${year}`; // "Aralık 2025"
+        const label = `${monthName} ${year}`; 
         
         options.push({ label, value: key });
       }
@@ -112,7 +107,6 @@ export const EventListScreen = ({ navigation }: any) => {
     if (option.value === 'all') {
       setFilteredData(allData);
     } else {
-      // Seçilen "2025-12" değerine göre filtrele
       const filtered = allData.filter(item => {
         const rawItem = item.originalData as EtkinlikItem;
         return rawItem.baslamaZamani.startsWith(option.value);
@@ -129,7 +123,7 @@ export const EventListScreen = ({ navigation }: any) => {
         date: item.date,
         content: rawItem.icerikTR,
         image: item.image,
-        location: rawItem.yerTR, // Konum bilgisini gönderiyoruz
+        location: rawItem.yerTR,
         category: dictionary.events
     });
     setModalVisible(true);
@@ -143,11 +137,9 @@ export const EventListScreen = ({ navigation }: any) => {
       <TouchableOpacity 
         onPress={() => handleItemPress(item)}
         activeOpacity={0.7}
-        // DÜZELTME: border-rose-200 yerine border-red-200 kullanıldı (Standart renk)
         className="bg-white rounded-xl mb-3 shadow-sm border-red-200 flex-row h-32 "
       >
         {/* SOL: RESİM ALANI */}
-        {/* w-32: Genişlik sabit, h-full: Yükseklik tam */}
         {item.image ? (
             <Image 
               source={{ uri: item.image }} 
@@ -155,8 +147,7 @@ export const EventListScreen = ({ navigation }: any) => {
               resizeMode="cover"
             />
         ) : (
-            // Resim yoksa Kırmızı kutu içinde takvim ikonu
-            // DÜZELTME: bg-rose-50 -> bg-red-50
+
             <View className="w-32 h-full bg-red-50 items-center justify-center border-r border-red-100">
                 <Calendar size={32} color="#dc2626" />
             </View>
@@ -210,12 +201,11 @@ export const EventListScreen = ({ navigation }: any) => {
         <View className="w-10" /> 
       </View>
 
-      {/* FİLTRE ALANI (COMBOBOX) - KIRMIZI TEMA */}
+      {/* FİLTRE ALANI (COMBOBOX)*/}
       <View className="px-4 py-4 z-20">
         <TouchableOpacity 
           onPress={() => setIsDropdownOpen(true)}
           activeOpacity={0.8}
-          // DÜZELTME: border-rose-200 -> border-red-200 (Siyah kenarlığı engellemek için)
           className="flex-row items-center justify-between bg-white border-red-200 p-4 rounded-xl shadow-sm"
         >
           <View className="flex-row items-center">
@@ -258,10 +248,8 @@ export const EventListScreen = ({ navigation }: any) => {
               renderItem={({ item }) => (
                 <TouchableOpacity 
                   onPress={() => handleFilterSelect(item)}
-                  // DÜZELTME: bg-rose-50 -> bg-red-50
                   className={`flex-row items-center justify-between p-4 rounded-xl mb-2 ${selectedFilter.value === item.value ? 'bg-red-50' : 'active:bg-slate-50'}`}
                 >
-                  {/* DÜZELTME: text-rose-700 -> text-red-700 */}
                   <Text className={`font-semibold text-base ${selectedFilter.value === item.value ? 'text-red-700' : 'text-slate-700'}`}>
                     {item.label}
                   </Text>

@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Linking, LayoutChangeEvent } from 'react-native';
-import { Phone, Mail, MapPin, Globe, Facebook, Instagram, Linkedin, X } from 'lucide-react-native';
+import { Phone, Mail, MapPin, Globe} from 'lucide-react-native';
 import { useLanguage } from '../context/LanguageContext';
 
 interface FooterProps {
@@ -15,7 +15,7 @@ export const Footer = ({ onLayout }: FooterProps) => {
 
   return (
     <View 
-      className="bg-red-950 px-6 py-10" // DÜZELTME: 'mt-10' silindi
+      className="bg-red-950 px-6 py-10"
       onLayout={onLayout} 
     >
       
@@ -81,7 +81,7 @@ export const Footer = ({ onLayout }: FooterProps) => {
           {dictionary.copyright}
         </Text>
         <Text className="text-gray-600 text-[10px] mt-1">
-          Mobil Uygulama v1.0
+          {dictionary.mobileApp} v1.0
         </Text>
       </View>
 

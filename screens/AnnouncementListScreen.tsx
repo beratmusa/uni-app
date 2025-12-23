@@ -6,7 +6,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { DetailModal, DetailData } from '../components/DetailModal';
 import { GenericItem } from '../components/AllItemsPage';
 
-// --- TİP TANIMLARI ---
 interface HaberItem {
   id: number;
   baslikTR: string;
@@ -18,7 +17,6 @@ interface HaberItem {
   kategori: string;
 }
 
-// --- RENK TEMALARI ---
 const CATEGORY_THEMES: Record<string, {
   bg: string;       
   text: string;     
@@ -46,7 +44,6 @@ const CATEGORY_THEMES: Record<string, {
   }
 };
 
-// --- ÇEVİRİ TABLOSU ---
 const TRANSLATIONS: Record<string, string> = {
   "Üniversite Haberleri": "University News",
   "Birim Haberleri": "Unit News",
@@ -63,7 +60,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
   const [filteredData, setFilteredData] = useState<GenericItem[]>([]);
   
   const ALL_LABEL = language === 'tr' ? "Tümü" : "All";
-  // Logic için her zaman 'Tümü' veya API kategori ismini tutuyoruz
   const [selectedCategory, setSelectedCategory] = useState<string>("Tümü");
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -85,7 +81,7 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
         date: new Date(item.baslamaZamani).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
         image: null, 
-        category: item.kategori, // Orijinal ismi sakla
+        category: item.kategori,
         originalData: item
       }));
 
@@ -107,8 +103,8 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
   // --- ÇEVİRİ YARDIMCISI ---
   const getCategoryDisplayName = (rawName: string) => {
     if (rawName === "Tümü" || rawName === "All") return language === 'tr' ? "Tümü" : "All";
-    if (language === 'tr') return rawName; // Türkçe ise dokunma
-    return TRANSLATIONS[rawName] || rawName; // İngilizce ise çeviriyi dene, yoksa orijinali dön
+    if (language === 'tr') return rawName; 
+    return TRANSLATIONS[rawName] || rawName; 
   };
 
   // --- TEMA RENGİ SEÇİCİ ---
@@ -132,7 +128,7 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         if (item.category) uniqueCats.add(item.category);
     });
 
-    const options = ["Tümü"]; // Logic için "Tümü" stringini kullanıyoruz
+    const options = ["Tümü"]; 
     uniqueCats.forEach(cat => options.push(cat));
     
     return options;
@@ -156,7 +152,7 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         date: item.date,
         content: language === 'tr' ? (rawItem.icerikTR || "") : (rawItem.icerikEN || rawItem.icerikTR || ""),
         image: null, 
-        category: getCategoryDisplayName(item.category || "") // Detayda çevrilmiş isim
+        category: getCategoryDisplayName(item.category || "") 
     });
     setModalVisible(true);
   };
@@ -205,7 +201,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
   };
 
   const activeTheme = getTheme(selectedCategory);
-  // Seçili olan kategorinin ekranda görünecek adı
   const selectedLabel = getCategoryDisplayName(selectedCategory);
 
   return (

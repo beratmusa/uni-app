@@ -11,7 +11,7 @@ export interface GenericItem {
   date: string;
   image?: string | null;
   category?: string;
-  originalData?: any; // Orijinal veriyi saklamak için (Detay sayfasına yollarken lazım olabilir)
+  originalData?: any; 
 }
 
 interface AllItemsPageProps {

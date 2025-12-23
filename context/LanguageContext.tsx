@@ -1,13 +1,13 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 1. SABİT ÇEVİRİLER
+// SABİT ÇEVİRİLER
 const translations = {
   tr: {
     agenda: "Gündem",
     featured: "Öne Çıkanlar",
     seeAll: "Tümünü Gör",
-    announcements: "Duyurular",
+    announcements: "Duyurular & Haberler",
     events: "Etkinlik Takvimi",
     campusLife: "Kampüste Hayat",
     dining: "Günün Menüsü",
@@ -58,15 +58,26 @@ const translations = {
     attendanceOperations: "Yoklama İşlemleri",
     instructorLogin: "Akademisyen Girişi",
     myIdCard: "Kimlik Kartım",
+    guestUser: "Misafir Kullanıcı",
+    welcome: "Hoş Geldiniz",
+    mobileApp:"Mobil Uygulama",
     idCard: {
     title: "Dijital Kimlik",
     uniName: "KASTAMONU ÜNİVERSİTESİ",
-    cardType: "ÖĞRENCİ KİMLİK KARTI",
+    cardType: "KİMLİK KARTI",
     studentNo: "Öğrenci No",
     tcNo: "T.C. Kimlik No",
     faculty: "Fakülte / Bölüm",
     active: "Aktif Öğrenci",
-    scan: "Doğrulama için okutunuz"
+    scan: "Doğrulama için okutunuz",
+  },
+  sideMenu: {
+    academicTitle: "AKADEMİK İŞLEMLER",
+    attendance: "Yoklama ve Dersler",
+    joinQr: "QR ile Katıl",
+    joinCode: "Kod ile Katıl",
+    createCourse: "Ders Aç (Eğitmen)",
+    instructorOps: "Yoklama İşlemleri"
   },
     categories: {
       all: "Tümü",
@@ -80,7 +91,7 @@ const translations = {
     agenda: "Agenda",
     featured: "Featured",
     seeAll: "See All",
-    announcements: "Announcements",
+    announcements: "Announcements & News",
     events: "Event Calendar",
     campusLife: "Campus Life",
     dining: "Daily Menu",
@@ -131,15 +142,26 @@ const translations = {
     attendanceOperations: "Attendance Operations",
     instructorLogin: "Instructor Login",
     myIdCard: "My ID Card",
+    guestUser: "Guest User",
+    welcome: "Welcome",
+    mobileApp:"Mobile App",
     idCard: {
     title: "Digital ID",
     uniName: "KASTAMONU UNIVERSITY",
-    cardType: "STUDENT ID CARD",
+    cardType: "ID CARD",
     studentNo: "Student No",
     tcNo: "TR ID No",
     faculty: "Faculty / Dept",
     active: "Active Student",
-    scan: "Scan for verification"
+    scan: "Scan for verification",
+  },
+  sideMenu: {
+    academicTitle: "ACADEMIC OPERATIONS",
+    attendance: "Attendance & Courses",
+    joinQr: "Join via QR",
+    joinCode: "Join via Code",
+    createCourse: "Create Course (Instructor)",
+    instructorOps: "Attendance Operations"
   },
     categories: {
       all: "All",
