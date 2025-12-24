@@ -13,6 +13,7 @@ import { QRScannerScreen } from './screens/QRScannerScreen';
 import { CourseListScreen } from './screens/CourseListScreen';
 import { StudentIDScreen } from './screens/StudentIDScreen';
 import { useDailyNotification } from './hooks/useDailyNotification';
+import { CourseScheduleScreen } from './screens/CourseScheduleScreen';
 
 const Stack = createNativeStackNavigator();
 // Bu ayar katı modu kapatır ve gereksiz uyarıyı engeller
@@ -62,6 +63,12 @@ const AppNavigator = () => {
         <Stack.Screen 
           name="StudentID" 
           component={StudentIDScreen} 
+          options={{ headerShown: false }} 
+        />
+
+        <Stack.Screen 
+          name="CourseSchedule" 
+          component={CourseScheduleScreen} 
           options={{ headerShown: false }} 
         />
 

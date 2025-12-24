@@ -287,7 +287,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   </TouchableOpacity>
                 )}
 
-                {/* 3. DERSLERİM BUTONU (Sadece Öğrenciler ve Hem Hoca Hem Öğrenciler Görür) */}
+                {/*  DERSLERİM BUTONU (Sadece Öğrenciler ve Hem Hoca Hem Öğrenciler Görür) */}
                 {token && isStudent && (
                   <TouchableOpacity 
                       onPress={() => { onClose(); navigation.navigate('CourseList'); }} 
@@ -298,7 +298,20 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   </TouchableOpacity>
                 )}
 
-                {/* 4. YOKLAMA VE İŞLEMLER (LOGIC BURADA) */}
+                {/* --- DERS PROGRAMI --- */}
+                {token && isStudent && (
+                  <TouchableOpacity 
+                      onPress={() => { onClose(); navigation.navigate('CourseSchedule'); }} 
+                      className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100"
+                  >
+                    <View className="opacity-60 text-gray-700"><Calendar size={20} /></View>
+                    <Text className="ml-3 font-semibold text-gray-700 text-base">
+                        {t.schedule || "Ders Programı"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {/*  YOKLAMA VE İŞLEMLER (LOGIC BURADA) */}
                 {token && (
                   <View>
                     {/* DURUM A: ÖĞRENCİ VEYA HEM ÖĞRENCİ HEM HOCA (Dropdown Menü) */}
@@ -366,14 +379,14 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   </View>
                 )}
                 
-                {/* 2. YEMEK LİSTESİ */}
+                {/*  YEMEK LİSTESİ */}
                 <TouchableOpacity onPress={handleDiningClick} className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100">
                     <View className="opacity-60 text-gray-700"><Utensils size={20} /></View>
                     <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.dining}</Text>
                 </TouchableOpacity>
 
                 
-                {/* 4. AKADEMİK TAKVİM */}
+                {/*  AKADEMİK TAKVİM */}
                 <View>
                   <TouchableOpacity onPress={() => setCalendarOpen(!isCalendarOpen)} className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isCalendarOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}>
                     <View className={`${isCalendarOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}><Calendar size={20} color={isCalendarOpen ? "#2563eb" : "#374151"} /></View>
@@ -404,7 +417,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   )}
                 </View>
 
-                {/* 5. İLETİŞİM */}
+                {/*  İLETİŞİM */}
                 <TouchableOpacity onPress={handleContactClick} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
                     <View className="opacity-60 text-gray-700"><Phone size={20} /></View>
                     <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.contactGuide}</Text>
