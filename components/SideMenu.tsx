@@ -7,6 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { Image } from 'react-native';
+import { CustomAlert } from './CustomAlert';
 
 import { PdfModal } from './PdfModal';
 import { AttendanceCodeModal } from './AttendanceCodeModal';
@@ -37,6 +38,14 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfTitle, setPdfTitle] = useState("");
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    type: 'success' as 'success' | 'error',
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
+
   // WebView (Modal) State'leri
   const [webViewVisible, setWebViewVisible] = useState(false);
   const [webViewUrl, setWebViewUrl] = useState<string | null>(null);
@@ -54,7 +63,16 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
     joinQr: "QR ile Katıl",
     joinCode: "Kod ile Katıl",
     createCourse: "Ders Aç (Eğitmen)",
-    instructorOps: "Yoklama İşlemleri"
+    instructorOps: "Yoklama İşlemleri",
+    successTitle: "Başarılı",
+    errorTitle: "Hata",
+    sessionExpired: "Oturum süreniz dolmuş.",
+    serverError: "Sunucu hatası.",
+    successMessage: "Yoklamaya katıldınız!",
+    invalidCode: "Geçersiz kod veya süresi dolmuş.",
+    ok: "Tamam",
+    retry: "Tekrar Dene",
+    exit: "Çık"
   };
 
   const handleDiningClick = () => {
@@ -86,9 +104,8 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
       
       handleOpenWeb(targetUrl, dictionary.login);
     } else {
-      // 2. Token YOKSA: Önce giriş yapması için Login ekranına gönder
-      onClose(); // Menüyü kapat
-      navigation.navigate('Login'); // LoginScreen (sorgu.kastamonu.edu.tr) açılır
+      onClose();
+      navigation.navigate('Login');
     }
   };
 
@@ -99,39 +116,42 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
   const handleCodeSubmit = async (code: string) => {
     if (!token) {
-      alert("Lütfen önce giriş yapınız.");
+      showAlert('error', t.errorTitle, t.sessionExpired);
       return;
     }
 
     try {
       console.log("Yoklama gönderiliyor...", code);
 
-      // 2. Sunucuya İstek Atma
-      // Gerçek API adresini buraya yazmalısın
       const response = await fetch('https://mobil.kastamonu.edu.tr/api/Yoklama/Katil', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`, // <-- İŞTE KİMLİĞİN BURADA GİDİYOR
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          attendanceCode: code // Gönderilen kod
+          attendanceCode: code
         })
       });
 
-      // 3. Sonucu Kontrol Etme
       if (response.ok) {
         const result = await response.json();
-        alert(`✅ Başarılı! ${result.message || "Yoklamaya katıldınız."}`);
         
         setCodeModalVisible(false);
+        
+        showAlert(
+            'success', 
+            t.successTitle, 
+            result.message || "Yoklamaya katıldınız!"
+        );
+
       } else {
-        alert("❌ Başarısız: Kod hatalı veya süre dolmuş olabilir.");
+        showAlert('error', t.errorTitle, t.invalidCode);
       }
 
     } catch (error) {
       console.error(error);
-      alert("Bağlantı hatası oluştu.");
+      showAlert('error', t.errorTitle, t.serverError);
     }
   };
 
@@ -140,6 +160,16 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
       // İleride buraya hoca ekranı navigasyonu gelecek
       alert("Akademisyen yoklama ekranı yakında eklenecek.");
       // navigation.navigate('InstructorAttendance'); 
+  };
+
+  const showAlert = (type: 'success' | 'error', title: string, message: string) => {
+    setAlertConfig({
+      visible: true,
+      type,
+      title,
+      message,
+      onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false })) // Sadece kapatır
+    });
   };
 
   return (
@@ -293,16 +323,14 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                             
                             {/* Herkes İçin: Kod ile Katıl */}
                             <TouchableOpacity onPress={() => setCodeModalVisible(true)} className="flex-row items-center p-3 rounded-lg active:bg-blue-50">
-                              <Keyboard size={16} color="#64748b" className="mr-3" />
-                              <Text className="text-gray-600 font-medium text-sm">{dictionary.joinWithCode}</Text>
-                              <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                              <Keyboard size={16} color="#64748b" />
+                              <Text className="text-gray-600 font-medium text-sm ml-2">{dictionary.joinWithCode}</Text>      
                             </TouchableOpacity>
 
                             {/* Herkes İçin: QR ile Katıl */}
                             <TouchableOpacity onPress={handleQRClick} className="flex-row items-center p-3 rounded-lg active:bg-blue-50">
-                              <QrCode size={16} color="#64748b" className="mr-3" />
-                              <Text className="text-gray-600 font-medium text-sm">{dictionary.joinWithQR}</Text>
-                              <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                              <QrCode size={16} color="#64748b" />
+                              <Text className="text-gray-600 font-medium text-sm ml-2">{dictionary.joinWithQR}</Text>                              
                             </TouchableOpacity>
 
                             {/* EKSTRA: Eğer Hem Öğrenci Hem Hocaysa "Ders Aç" Butonu Görünür */}
@@ -316,8 +344,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                                     </View>
                                     <Text className="text-red-600 font-bold text-sm">
                                         {t.createCourse || "Ders Aç (Eğitmen)"}
-                                    </Text>
-                                    <ChevronRight size={12} color="#dc2626" style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                    </Text>                                    
                                 </TouchableOpacity>
                             )}
 
@@ -333,8 +360,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                         <View className="opacity-60 text-gray-700"><Briefcase size={20} /></View>
                         <Text className="ml-3 font-semibold text-gray-700 text-base">
                             {t.instructorOps || "Yoklama İşlemleri"}
-                        </Text>
-                        <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />
+                        </Text>                        
                       </TouchableOpacity>
                     )}
                   </View>
@@ -416,6 +442,14 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
         visible={codeModalVisible}
         onClose={() => setCodeModalVisible(false)}
         onSubmit={handleCodeSubmit}
+      />
+      <CustomAlert 
+        visible={alertConfig.visible}
+        type={alertConfig.type}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onConfirm={alertConfig.onConfirm}
+        confirmText={t.ok || "Tamam"}
       />
     </Animated.View>
   );
