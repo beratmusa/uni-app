@@ -77,7 +77,16 @@ const translations = {
     joinQr: "QR ile Katıl",
     joinCode: "Kod ile Katıl",
     createCourse: "Ders Aç (Eğitmen)",
-    instructorOps: "Yoklama İşlemleri"
+    instructorOps: "Yoklama İşlemleri",
+    successTitle: "Başarılı",
+    errorTitle: "Hata",
+    sessionExpired: "Oturum süreniz dolmuş, lütfen tekrar giriş yapın.",
+    serverError: "Sunucuya bağlanılamadı.",
+    successMessage: "✅ Yoklamaya başarıyla katıldınız!",
+    invalidCode: "❌ Kod geçersiz veya süresi dolmuş.",
+    ok: "Tamam",
+    retry: "Tekrar Dene",
+    exit: "Çık"
   },
     categories: {
       all: "Tümü",
@@ -85,7 +94,21 @@ const translations = {
       academic: "Akademik",
       admin: "İdari",
       general: "Genel"
-    }
+    },
+    qr: {
+    overlay: "Karekodu okutunuz",
+    permissionRequest: "Kamera izni gerekiyor",
+    noPermission: "Kamera izni yok",
+    successTitle: "Başarılı",
+    errorTitle: "Hata",
+    sessionExpired: "Oturum süreniz dolmuş, lütfen tekrar giriş yapın.",
+    serverError: "Sunucuya bağlanılamadı.",
+    successMessage: "✅ Yoklamaya başarıyla katıldınız!",
+    invalidCode: "❌ QR Kod geçersiz veya süresi dolmuş.",
+    ok: "Tamam",
+    retry: "Tekrar Dene",
+    exit: "Çık"
+  }
   },
   en: {
     agenda: "Agenda",
@@ -161,7 +184,16 @@ const translations = {
     joinQr: "Join via QR",
     joinCode: "Join via Code",
     createCourse: "Create Course (Instructor)",
-    instructorOps: "Attendance Operations"
+    instructorOps: "Attendance Operations",
+    successTitle: "Success",
+    errorTitle: "Error",
+    sessionExpired: "Session expired, please login again.",
+    serverError: "Could not connect to server.",
+    successMessage: "✅ You have successfully joined!",
+    invalidCode: "❌ Invalid or expired Code.",
+    ok: "OK",
+    retry: "Retry",
+    exit: "Exit"
   },
     categories: {
       all: "All",
@@ -169,7 +201,21 @@ const translations = {
       academic: "Academic",
       admin: "Admin",
       general: "General"
-    }
+    },
+    qr: {
+    overlay: "Scan the QR code",
+    permissionRequest: "Camera permission required",
+    noPermission: "No camera permission",
+    successTitle: "Success",
+    errorTitle: "Error",
+    sessionExpired: "Session expired, please login again.",
+    serverError: "Could not connect to server.",
+    successMessage: "✅ You have successfully joined!",
+    invalidCode: "❌ Invalid or expired QR Code.",
+    ok: "OK",
+    retry: "Retry",
+    exit: "Exit"
+  }
   }
 };
 

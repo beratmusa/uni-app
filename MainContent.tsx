@@ -33,7 +33,6 @@ interface ApiResponse {
 }
 
 export default function MainContent() {
-  // Dili buradan çekiyoruz, değiştiği an bu sayfa yenilenir (Re-render)
   const { language, dictionary } = useLanguage(); 
 
   const [slaytlar, setSlaytlar] = useState<SlaytItem[]>([]);
@@ -128,7 +127,6 @@ export default function MainContent() {
     setModalVisible(true);
   };
 
-  // Gündem Detayı (Fotoğraflar için API isteği atar)
   const handleAgendaClick = async (item: GundemItem) => {
     try {
       const response = await fetch(`https://testapi.kastamonu.edu.tr/api/gundem/${item.id}`);
@@ -181,25 +179,21 @@ export default function MainContent() {
         <View className="flex-row justify-between items-center px-5 py-6 bg-white shadow-sm z-50 border-b border-slate-100">
           
           <View className="flex-row items-center gap-3">
-            {/* Logo */}
             <Image 
-              source={require('./assets/icon.png')} // Kendi logonu eklediğinde 'logo.png' yap
+              source={require('./assets/icon.png')}
               className="w-12 h-12"
               resizeMode="contain"
             />
             
             <View>
-              {/* Üniversite Adı */}
               <Text className="text-xl font-black text-slate-900 leading-6 tracking-tight">
                 KASTAMONU
               </Text>
               
-              {/* Dinamik Alt Başlık (TR/EN) */}
               <Text className="text-[11px] font-bold text-red-600 tracking-[3px] uppercase">
                 {language === 'en' ? 'UNIVERSITY' : 'ÜNİVERSİTESİ'}
               </Text>
               
-              {/* Kırmızı Çizgi */}
               <View className="h-1 w-10 bg-red-600 rounded-full mt-1.5" />
             </View>
           </View>
@@ -213,7 +207,6 @@ export default function MainContent() {
             <Menu color="#0f172a" size={24} />
           </TouchableOpacity>
         </View>
-        {/* --------------------------------------------------- */}
 
         {/* Yan Menü */}
         {menuVisible && (
