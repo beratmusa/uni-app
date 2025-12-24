@@ -86,7 +86,8 @@ const translations = {
     invalidCode: "❌ Kod geçersiz veya süresi dolmuş.",
     ok: "Tamam",
     retry: "Tekrar Dene",
-    exit: "Çık"
+    exit: "Çık",
+    schedule: "Ders Programı",
   },
     categories: {
       all: "Tümü",
@@ -108,7 +109,16 @@ const translations = {
     ok: "Tamam",
     retry: "Tekrar Dene",
     exit: "Çık"
-  }
+  },
+  courseSchedule: {
+    title: "Ders Programı",
+    days: ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"],
+    noLesson: "Bu gün için ders bulunmamaktadır.",
+    loading: "Ders programı yükleniyor...",
+    error: "Ders programı alınamadı.",
+    classroom: "Derslik",
+    lecturer: "Öğretim Elemanı"
+  },
   },
   en: {
     agenda: "Agenda",
@@ -193,7 +203,8 @@ const translations = {
     invalidCode: "❌ Invalid or expired Code.",
     ok: "OK",
     retry: "Retry",
-    exit: "Exit"
+    exit: "Exit",
+    schedule: "Course Schedule",
   },
     categories: {
       all: "All",
@@ -215,7 +226,16 @@ const translations = {
     ok: "OK",
     retry: "Retry",
     exit: "Exit"
-  }
+  },
+  courseSchedule: {
+    title: "Course Schedule",
+    days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    noLesson: "No lessons for this day.",
+    loading: "Loading schedule...",
+    error: "Could not fetch schedule.",
+    classroom: "Classroom",
+    lecturer: "Lecturer"
+  },
   }
 };
 
