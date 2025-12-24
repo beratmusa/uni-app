@@ -12,6 +12,7 @@ import { LoginScreen } from './screens/LoginScreen';
 import { QRScannerScreen } from './screens/QRScannerScreen';
 import { CourseListScreen } from './screens/CourseListScreen';
 import { StudentIDScreen } from './screens/StudentIDScreen';
+import { useDailyNotification } from './hooks/useDailyNotification';
 
 const Stack = createNativeStackNavigator();
 // Bu ayar katı modu kapatır ve gereksiz uyarıyı engeller
@@ -22,6 +23,7 @@ configureReanimatedLogger({
 
 const AppNavigator = () => {
   const { language } = useLanguage();
+  
 
   return (
     <NavigationContainer key={language}>
@@ -69,6 +71,7 @@ const AppNavigator = () => {
 };
 
 export default function App() {
+  useDailyNotification();
   return (
     <LanguageProvider> 
       <AuthProvider>
