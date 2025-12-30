@@ -88,6 +88,9 @@ const translations = {
     retry: "Tekrar Dene",
     exit: "Çık",
     schedule: "Ders Programı",
+    courseOperations: "Ders İşlemleri",
+    myCourses: "Derslerim",
+    absenteeism: "Devamsızlık Bilgisi"
   },
     categories: {
       all: "Tümü",
@@ -118,6 +121,25 @@ const translations = {
     error: "Ders programı alınamadı.",
     classroom: "Derslik",
     lecturer: "Öğretim Elemanı"
+  },
+  absenteeism: {
+    title: "Devamsızlık Bilgisi",
+    modalTitle: "Devamsızlık Detayı",
+    total: "TOPLAM",
+    attended: "KATILDI",
+    absent: "YOK",
+    hour: "Saat",
+    rate: "Devam Oranı",
+    rule: "Ders geçme alt limiti %70 olarak baz alınmıştır.",
+    weekly: "Haftalık Döküm",
+    present: "Var",
+    absentStatus: "Yok",
+    lessonHour: "Ders Saati",
+    noData: "Kayıt bulunamadı.",
+    loading: "Dersler yükleniyor...",
+    noCourse: "Ders kaydı bulunamadı.",
+    calculating: "Veriler alınıyor...",
+    error: "Hata oluştu."
   },
   },
   en: {
@@ -205,6 +227,9 @@ const translations = {
     retry: "Retry",
     exit: "Exit",
     schedule: "Course Schedule",
+    courseOperations: "Course Operations",
+    myCourses: "My Courses",
+    absenteeism: "Absenteeism Info",
   },
     categories: {
       all: "All",
@@ -235,6 +260,25 @@ const translations = {
     error: "Could not fetch schedule.",
     classroom: "Classroom",
     lecturer: "Lecturer"
+  },
+  absenteeism: {
+    title: "Attendance Info",
+    modalTitle: "Attendance Details",
+    total: "TOTAL",
+    attended: "PRESENT",
+    absent: "ABSENT",
+    hour: "Hrs",
+    rate: "Attendance Rate",
+    rule: "Based on 70% attendance requirement.",
+    weekly: "Weekly Breakdown",
+    present: "Present",
+    absentStatus: "Absent",
+    lessonHour: "Lesson Hour",
+    noData: "No records found.",
+    loading: "Loading courses...",
+    noCourse: "No course records found.",
+    calculating: "Fetching data...",
+    error: "An error occurred."
   },
   }
 };

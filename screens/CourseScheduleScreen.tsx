@@ -129,17 +129,16 @@ export const CourseScheduleScreen = () => {
     }
 
     return (
-      <View className="bg-white mx-4 mb-4 rounded-xl shadow-md border border-slate-200 flex-row overflow-hidden min-h-[130px]">
+      <View className="bg-white mx-4 mb-4 rounded-xl shadow-md border border-slate-200 flex-row overflow-hidden min-h-[100px]">
         
-        <View className="w-20 bg-blue-600 flex-col items-center justify-between py-4 px-1">
+        <View className="w-20 bg-blue-600 flex-col items-center justify-between py-6 px-1">
             {/* Başlangıç Saati */}
             <View>
               <Text className="text-white font-bold text-sm text-center">
                 {item.StartTime}
               </Text>
             </View>
-
-
+            <View className="h-3 w-[2px] bg-blue-300 my-0.5 rounded-full" />
             {/* Bitiş Saati */}
             <View>
               <Text className="text-white font-bold text-sm text-center">
@@ -152,7 +151,7 @@ export const CourseScheduleScreen = () => {
         <View className="flex-1 flex-row">
             
             {/* ORTA: DERS ADI ve HOCA */}
-            <View className="flex-1 justify-center pl-4 pr-2 py-4">
+            <View className="flex-1 justify-center pl-4 pr-2 py-6">
                 <Text className="text-slate-800 font-bold text-lg mb-2 leading-6">
                     {item.LessonName}
                 </Text>
@@ -173,7 +172,7 @@ export const CourseScheduleScreen = () => {
                  </Text>
                  
                  {roomNumber ? (
-                    <Text className="text-slate-700 font-black text-3xl tracking-tighter">
+                    <Text className="text-slate-700 font-black text-2xl tracking-tighter">
                         {roomNumber}
                     </Text>
                  ) : null}

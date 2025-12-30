@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,Briefcase,IdCard,Plus} from 'lucide-react-native';
+import { X, User, BookOpen, Calendar, Phone, LogOut, ChevronRight, ChevronDown, Utensils, ClipboardCheck, QrCode, Keyboard,Briefcase,IdCard,Plus,GraduationCap,FileText} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutRight } from 'react-native-reanimated';
 import { useLanguage } from '../context/LanguageContext';
@@ -33,6 +33,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const navigation = useNavigation<any>();
   const [isCalendarOpen, setCalendarOpen] = useState(false);
   const [isAttendanceOpen, setAttendanceOpen] = useState(false);
+  const [isCourseOpsOpen, setCourseOpsOpen] = useState(false);
 
   const [pdfVisible, setPdfVisible] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -55,7 +56,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const isBoth = isStudent && isInstructor;
   const isOnlyInstructor = isInstructor && !isStudent;
   const isOnlyStudent = isStudent && !isInstructor;
-  if (!isStudent && !isInstructor) return null;
 
   const t = dictionary.sideMenu || {
     academicTitle: "AKADEMİK İŞLEMLER",
@@ -72,7 +72,11 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
     invalidCode: "Geçersiz kod veya süresi dolmuş.",
     ok: "Tamam",
     retry: "Tekrar Dene",
-    exit: "Çık"
+    exit: "Çık",
+    courseOperations: "Ders İşlemleri",
+    myCourses: "Derslerim",
+    schedule: "Ders Programı",
+    absenteeism: "Devamsızlık Bilgisi"
   };
 
   const handleDiningClick = () => {
@@ -287,28 +291,66 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   </TouchableOpacity>
                 )}
 
-                {/*  DERSLERİM BUTONU (Sadece Öğrenciler ve Hem Hoca Hem Öğrenciler Görür) */}
+               {/* --- DERS İŞLEMLERİ (Dropdown Menü) --- */}
                 {token && isStudent && (
-                  <TouchableOpacity 
-                      onPress={() => { onClose(); navigation.navigate('CourseList'); }} 
-                      className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100"
-                  >
-                    <View className="opacity-60 text-gray-700"><BookOpen size={20} /></View>
-                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.myCourses}</Text>
-                  </TouchableOpacity>
-                )}
+                  <View>
+                    <TouchableOpacity 
+                      onPress={() => setCourseOpsOpen(!isCourseOpsOpen)} 
+                      className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isCourseOpsOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}
+                    >
+                      <View className={`${isCourseOpsOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}>
+                          {/* GraduationCap ikonu yoksa BookOpen da kullanabilirsiniz */}
+                          <GraduationCap size={20} color={isCourseOpsOpen ? "#2563eb" : "#374151"} />
+                      </View>
+                      <Text className={`ml-3 font-semibold text-base ${isCourseOpsOpen ? "text-blue-700" : "text-gray-700"}`}>
+                          {t.courseOperations || "Ders İşlemleri"}
+                      </Text>
+                      {isCourseOpsOpen ? <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />}
+                    </TouchableOpacity>
 
-                {/* --- DERS PROGRAMI --- */}
-                {token && isStudent && (
-                  <TouchableOpacity 
-                      onPress={() => { onClose(); navigation.navigate('CourseSchedule'); }} 
-                      className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100"
-                  >
-                    <View className="opacity-60 text-gray-700"><Calendar size={20} /></View>
-                    <Text className="ml-3 font-semibold text-gray-700 text-base">
-                        {t.schedule || "Ders Programı"}
-                    </Text>
-                  </TouchableOpacity>
+                    {/* --- ALT MENÜLER --- */}
+                    {isCourseOpsOpen && (
+                      <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
+                        
+                        {/* 1. Derslerim */}
+                        <TouchableOpacity 
+                            onPress={() => { onClose(); navigation.navigate('CourseList'); }} 
+                            className="flex-row items-center p-3 rounded-lg active:bg-blue-50"
+                        >
+                          <BookOpen size={16} color="#64748b" />
+                          <Text className="text-gray-600 font-medium text-sm ml-2">
+                              {dictionary.myCourses || "Derslerim"}
+                          </Text>      
+                        </TouchableOpacity>
+
+                        {/* 2. Ders Programı */}
+                        <TouchableOpacity 
+                            onPress={() => { onClose(); navigation.navigate('CourseSchedule'); }} 
+                            className="flex-row items-center p-3 rounded-lg active:bg-blue-50"
+                        >
+                          <Calendar size={16} color="#64748b" />
+                          <Text className="text-gray-600 font-medium text-sm ml-2">
+                              {t.schedule || "Ders Programı"}
+                          </Text>                              
+                        </TouchableOpacity>
+
+                        {/* 3. Devamsızlık Bilgisi */}
+                        <TouchableOpacity 
+                            onPress={() => { 
+                                onClose(); 
+                                navigation.navigate('Absenteeism'); 
+                            }} 
+                            className="flex-row items-center p-3 rounded-lg active:bg-blue-50"
+                        >
+                          <FileText size={16} color="#64748b" />
+                          <Text className="text-gray-600 font-medium text-sm ml-2">
+                              {t.absenteeism || "Devamsızlık Bilgisi"}
+                          </Text>                              
+                        </TouchableOpacity>
+
+                      </View>
+                    )}
+                  </View>
                 )}
 
                 {/*  YOKLAMA VE İŞLEMLER (LOGIC BURADA) */}
@@ -379,12 +421,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                   </View>
                 )}
                 
-                {/*  YEMEK LİSTESİ */}
-                <TouchableOpacity onPress={handleDiningClick} className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100">
-                    <View className="opacity-60 text-gray-700"><Utensils size={20} /></View>
-                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.dining}</Text>
-                </TouchableOpacity>
-
                 
                 {/*  AKADEMİK TAKVİM */}
                 <View>
@@ -416,6 +452,12 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                     </View>
                   )}
                 </View>
+
+                {/*  YEMEK LİSTESİ */}
+                <TouchableOpacity onPress={handleDiningClick} className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100">
+                    <View className="opacity-60 text-gray-700"><Utensils size={20} /></View>
+                    <Text className="ml-3 font-semibold text-gray-700 text-base">{dictionary.dining}</Text>
+                </TouchableOpacity>
 
                 {/*  İLETİŞİM */}
                 <TouchableOpacity onPress={handleContactClick} className="flex-row items-center p-4 rounded-xl active:bg-gray-50 border border-transparent active:border-gray-200">
