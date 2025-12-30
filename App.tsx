@@ -14,6 +14,7 @@ import { CourseListScreen } from './screens/CourseListScreen';
 import { StudentIDScreen } from './screens/StudentIDScreen';
 import { useDailyNotification } from './hooks/useDailyNotification';
 import { CourseScheduleScreen } from './screens/CourseScheduleScreen';
+import { AbsenteeismScreen } from './screens/AbsenteeismScreen';
 
 const Stack = createNativeStackNavigator();
 // Bu ayar katı modu kapatır ve gereksiz uyarıyı engeller
@@ -70,6 +71,12 @@ const AppNavigator = () => {
           name="CourseSchedule" 
           component={CourseScheduleScreen} 
           options={{ headerShown: false }} 
+        />
+
+        <Stack.Screen 
+          name="Absenteeism" 
+          component={AbsenteeismScreen} 
+          options={{ headerShown: false, animation: 'slide_from_right' }} 
         />
 
       </Stack.Navigator>
