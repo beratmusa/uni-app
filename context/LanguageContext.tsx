@@ -70,6 +70,9 @@ const translations = {
     faculty: "Fakülte / Bölüm",
     active: "Aktif Öğrenci",
     scan: "Doğrulama için okutunuz",
+    cardId: "Kart No",
+    loading: "Kart bilgileri yükleniyor...",
+    error: "Kart bilgisi bulunamadı."
   },
   sideMenu: {
     academicTitle: "AKADEMİK İŞLEMLER",
@@ -94,10 +97,10 @@ const translations = {
   },
     categories: {
       all: "Tümü",
-      student: "Öğrenci",
-      academic: "Akademik",
-      admin: "İdari",
-      general: "Genel"
+      student: "Öğrenci Duyuruları",
+      academic: "Birim Haberleri",
+      admin: "Üniversite Duyuruları",
+      general: "Üniversite Haberleri"
     },
     qr: {
     overlay: "Karekodu okutunuz",
@@ -209,6 +212,9 @@ const translations = {
     faculty: "Faculty / Dept",
     active: "Active Student",
     scan: "Scan for verification",
+    cardId: "Card No",
+    loading: "Loading card information...",
+    error: "No card information found."
   },
   sideMenu: {
     academicTitle: "ACADEMIC OPERATIONS",
@@ -233,10 +239,10 @@ const translations = {
   },
     categories: {
       all: "All",
-      student: "Student",
-      academic: "Academic",
-      admin: "Admin",
-      general: "General"
+      student: "Student Announcements",
+      academic: "Unit News",
+      admin: "University Announcements",
+      general: "University News"
     },
     qr: {
     overlay: "Scan the QR code",
