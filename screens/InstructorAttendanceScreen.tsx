@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Clock, MapPin, QrCode, Keyboard, Calendar, AlertCircle,ListChecks,Settings2 } from 'lucide-react-native';
+import { ArrowLeft, Clock, MapPin, AlertCircle, Settings2 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 // API'den dönen veri yapısı
 interface InstructorSchedule {
@@ -23,27 +23,14 @@ interface InstructorSchedule {
   CourseHours:{ [key: string]: string };
 }
 
-// Navigasyon prop'unu güvenli alıyoruz
 export const InstructorAttendanceScreen = () => {
   const navigation = useNavigation<any>();
   const { token } = useAuth();
-  const { dictionary } = useLanguage();
+  const { dictionary, language } = useLanguage(); // language'i de aldık (tarih formatı için)
 
   const [activeSchedules, setActiveSchedules] = useState<InstructorSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Dil Değişkenleri
-  const t = {
-    title: "Yoklama Yönetimi",
-    startQR: "QR Başlat",
-    startCode: "Kod Üret",
-    noActiveTitle: "Aktif Ders Yok",
-    noActiveDesc: "Şu an yoklama başlatabileceğiniz bir ders saati içerisinde değilsiniz.",
-    loading: "Dersler kontrol ediliyor...",
-    activeLabel: "YOKLAMA BAŞLATILABİLİR",
-    refresh: "Yenile"
-  };
 
   useEffect(() => {
     fetchSchedules();
@@ -66,21 +53,17 @@ export const InstructorAttendanceScreen = () => {
       const json = await response.json();
       
       if (json.Data && json.Data.Data) {
-        // Tüm dersleri al
         const allLessons = json.Data.Data;
-        
-        // Sadece AKTİF olanları filtrele
         const filteredActive = allLessons.filter((item: InstructorSchedule) => 
             isLessonActive(item.StartHour, item.FinishHour)
         );
-
         setActiveSchedules(filteredActive);
       } else {
         setActiveSchedules([]);
       }
     } catch (error) {
       console.error("Ders programı hatası:", error);
-      Alert.alert("Hata", "Dersler yüklenemedi.");
+      Alert.alert(dictionary.error || "Hata", dictionary.lessonsLoadError || "Dersler yüklenemedi.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -90,39 +73,38 @@ export const InstructorAttendanceScreen = () => {
   // --- SAAT KONTROLÜ (15 DK KURALI) ---
   const isLessonActive = (startHour: string, finishHour: string) => {
     // const now = new Date(); 
-    // Test etmek isterseniz aşağıdaki satırı açıp saati manuel verebilirsiniz:
+    // Test amaçlı hardcoded tarih (Kullanırken burayı new Date() yapabilirsiniz)
     const now = new Date("2026-01-07T13:40:00"); 
 
     const start = new Date(startHour);
     const finish = new Date(finishHour);
 
-    // Başlangıçtan 15 dk önce başlar
     const activeStart = new Date(start.getTime() - 15 * 60000);
-    
-    // Bitişten 15 dk sonra biter
     const activeEnd = new Date(finish.getTime() + 15 * 60000);
 
     return now >= activeStart && now <= activeEnd;
   };
 
   const handleStartQR = (lesson: InstructorSchedule) => {
-    Alert.alert("QR Modülü", `${lesson.CourseName} için QR başlatılıyor...`);
-    // navigation.navigate('InstructorQR', { lessonData: lesson });
+    const message = (dictionary.startingQR || "{0} için QR başlatılıyor...").replace("{0}", lesson.CourseName);
+    Alert.alert(dictionary.qrModule, message);
   };
 
   const handleStartCode = (lesson: InstructorSchedule) => {
-    Alert.alert("Kod Modülü", `${lesson.CourseName} için kod üretiliyor...`);
-    // navigation.navigate('InstructorCode', { lessonData: lesson });
+    const message = (dictionary.generatingCode || "{0} için kod üretiliyor...").replace("{0}", lesson.CourseName);
+    Alert.alert(dictionary.codeModule, message);
   };
 
-  // Güvenli Geri Gitme
   const handleGoBack = () => {
     if (navigation?.canGoBack?.()) navigation.goBack();
   };
 
   const renderActiveCard = ({ item }: { item: InstructorSchedule }) => {
-    const startTime = new Date(item.StartHour).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    const finishTime = new Date(item.FinishHour).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    // Tarih formatını seçili dile göre ayarla (tr-TR veya en-US)
+    const locale = language === 'tr' ? 'tr-TR' : 'en-US';
+    
+    const startTime = new Date(item.StartHour).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    const finishTime = new Date(item.FinishHour).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 
     return (
         <View className="bg-white mx-5 mb-6 rounded-3xl border-2 border-green-500 shadow-xl overflow-hidden">
@@ -130,7 +112,7 @@ export const InstructorAttendanceScreen = () => {
             <View className="bg-green-500 p-4 flex-row justify-between items-center">
                 <View className="bg-white/20 px-3 py-1 rounded-full">
                     <Text className="text-white text-xs font-bold uppercase tracking-wider animate-pulse">
-                        {t.activeLabel}
+                        {dictionary.attendanceCanStart}
                     </Text>
                 </View>
                 <View className="bg-white/20 p-1.5 rounded-full">
@@ -164,14 +146,14 @@ export const InstructorAttendanceScreen = () => {
                     <TouchableOpacity 
                         onPress={() => navigation.navigate('AttendanceManager', { 
                             classId: item.ClassNo, 
-                            scheduleId: item.Scheduledate,
+                            scheduleId: item.WeeklyClassScheduleNo, // Düzeltilmiş ID
                             courseName: item.CourseName,
-                            courseHours: item.CourseHours // Ders saatlerini (1, 2, 3...) buraya gönderiyoruz
+                            courseHours: item.CourseHours
                         })}
                         className="mt-4 bg-blue-600 rounded-xl py-3 flex-row items-center justify-center shadow-sm active:bg-blue-700"
                     >
                         <Settings2 size={18} color="white" /> 
-                        <Text className="text-white font-bold ml-2 text-sm">Yoklama Yönet</Text>
+                        <Text className="text-white font-bold ml-2 text-sm">{dictionary.manageAttendance}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -190,14 +172,14 @@ export const InstructorAttendanceScreen = () => {
         >
           <ArrowLeft size={20} color="#334155" />
         </TouchableOpacity>
-        <Text className="text-lg font-bold text-slate-800">{t.title}</Text>
+        <Text className="text-lg font-bold text-slate-800">{dictionary.attendanceManagement}</Text>
         <View className="w-10" /> 
       </View>
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
              <ActivityIndicator size="large" color="#2563eb" />
-             <Text className="mt-4 text-slate-500 font-medium">{t.loading}</Text>
+             <Text className="mt-4 text-slate-500 font-medium">{dictionary.checkingLessons}</Text>
         </View>
       ) : (
         <FlatList
@@ -214,16 +196,16 @@ export const InstructorAttendanceScreen = () => {
                         <AlertCircle size={40} color="#94a3b8" />
                      </View>
                      <Text className="text-slate-800 font-bold text-lg text-center mb-2">
-                        {t.noActiveTitle}
+                        {dictionary.noActiveLesson}
                      </Text>
                      <Text className="text-slate-400 text-center leading-5">
-                        {t.noActiveDesc}
+                        {dictionary.noActiveLessonDesc}
                      </Text>
                      <TouchableOpacity 
                         onPress={() => { setLoading(true); fetchSchedules(); }}
                         className="mt-6 bg-blue-50 px-6 py-3 rounded-full border border-blue-100 active:bg-blue-100"
                      >
-                        <Text className="text-blue-600 font-bold">{t.refresh}</Text>
+                        <Text className="text-blue-600 font-bold">{dictionary.refresh}</Text>
                      </TouchableOpacity>
                 </View>
             }
