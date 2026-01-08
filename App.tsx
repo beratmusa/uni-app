@@ -16,7 +16,6 @@ import { useDailyNotification } from './hooks/useDailyNotification';
 import { CourseScheduleScreen } from './screens/CourseScheduleScreen';
 import { AbsenteeismScreen } from './screens/AbsenteeismScreen';
 import { InstructorAttendanceScreen } from './screens/InstructorAttendanceScreen';
-import { InstructorManualAttendanceScreen } from './screens/InstructorManualAttendanceScreen';
 import { AttendanceManagerScreen } from './screens/AttendanceManagerScreen';
 
 const Stack = createNativeStackNavigator();
@@ -87,12 +86,6 @@ const AppNavigator = () => {
         <Stack.Screen 
           name="InstructorAttendance" 
           component={InstructorAttendanceScreen} 
-          options={{ headerShown: false }} 
-        />
-
-        <Stack.Screen 
-          name="InstructorManualAttendance" 
-          component={InstructorManualAttendanceScreen} 
           options={{ headerShown: false }} 
         />
 

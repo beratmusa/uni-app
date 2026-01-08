@@ -26,7 +26,7 @@ interface InstructorSchedule {
 export const InstructorAttendanceScreen = () => {
   const navigation = useNavigation<any>();
   const { token } = useAuth();
-  const { dictionary, language } = useLanguage(); // language'i de aldık (tarih formatı için)
+  const { dictionary, language } = useLanguage();
 
   const [activeSchedules, setActiveSchedules] = useState<InstructorSchedule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,9 +72,8 @@ export const InstructorAttendanceScreen = () => {
 
   // --- SAAT KONTROLÜ (15 DK KURALI) ---
   const isLessonActive = (startHour: string, finishHour: string) => {
-    // const now = new Date(); 
-    // Test amaçlı hardcoded tarih (Kullanırken burayı new Date() yapabilirsiniz)
-    const now = new Date("2026-01-07T13:40:00"); 
+    const now = new Date(); 
+    //const now = new Date("2026-01-07T13:40:00"); 
 
     const start = new Date(startHour);
     const finish = new Date(finishHour);

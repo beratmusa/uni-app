@@ -1,11 +1,11 @@
 import React, { useState, useEffect, memo, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Switch, ActivityIndicator, FlatList, TextInput, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { QrCode, Hash, ArrowLeft, Clock, Search, User, X, CheckSquare, Square } from 'lucide-react-native';
+import { QrCode, Hash, ArrowLeft, Search, User, CheckSquare, Square, Lock, Settings2, X, RefreshCw, Clock } from 'lucide-react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { CustomAlert } from '../components/CustomAlert'; // <-- CustomAlert import edildi
+import { CustomAlert } from '../components/CustomAlert';
 
 // --- TİPLER ---
 interface RouteParams {
@@ -23,6 +23,7 @@ interface Student {
   StudentImageCode?: string;
   AttendanceHistory: { [key: string]: boolean };
   Isblock?: boolean;
+  ScheduleOrder?: number; // API'den gelen saat bilgisi
   isModified?: boolean;
 }
 
@@ -74,17 +75,24 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
   const availableHours = Object.keys(params?.courseHours || {}).filter(k => k !== "0").sort();
   const canBeBlock = Object.keys(params?.courseHours || {}).includes("0");
 
-  const [selectedHours, setSelectedHours] = useState<string[]>([]);
-  const [isBlockMode, setIsBlockMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<'QR' | 'CODE'>('QR');
+  // --- STATE INIT ---
+  // İlk açılışta varsayılan değerler
+  const [isBlockMode, setIsBlockMode] = useState(canBeBlock);
+  const [selectedHours, setSelectedHours] = useState<string[]>(
+      canBeBlock 
+          ? [...availableHours] 
+          : (availableHours.length > 0 ? [availableHours[0]] : [])
+  );
+
+  const [activeTab, setActiveTab] = useState<'QR' | 'CODE'>('CODE');
   const [generatedData, setGeneratedData] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
   
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  // --- CUSTOM ALERT STATE ---
   const [alertConfig, setAlertConfig] = useState({
       visible: false,
       type: 'success' as 'success' | 'error' | 'warning',
@@ -99,13 +107,13 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
   const closeAlert = () => {
       setAlertConfig(prev => ({ ...prev, visible: false }));
   };
-  // --------------------------
 
   useEffect(() => {
       fetchStudents();
   }, []);
 
   const fetchStudents = async () => {
+    setLoadingStudents(true);
     try {
       const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
         method: 'POST',
@@ -121,7 +129,50 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
       
       const json = await response.json();
       if (json.Data && Array.isArray(json.Data.Data)) {
-        setStudents(json.Data.Data);
+        const studentList = json.Data.Data;
+        setStudents(studentList);
+
+        // --- GÜNCELLEME: API Verisine Göre Saat Seçimi ---
+        if (studentList.length > 0) {
+            const firstStudent = studentList[0];
+            const scheduleOrder = firstStudent.ScheduleOrder || 0; // API'den gelen değer
+
+            if (scheduleOrder === 0) {
+                // BLOK MODU (API 0 Döndüyse)
+                if (canBeBlock) {
+                    setIsBlockMode(true);
+                    setSelectedHours([...availableHours]); // Tümünü seç
+                } else {
+                    // Blok olamıyorsa ilk saati seç
+                    setIsBlockMode(false);
+                    if (availableHours.length > 0) setSelectedHours([availableHours[0]]);
+                }
+            } else {
+                // NORMAL MOD (Belirli bir saat varsa örn: 2)
+                setIsBlockMode(false);
+                const orderStr = scheduleOrder.toString();
+                // Eğer gelen saat bizim saat listemizde varsa onu seç
+                if (availableHours.includes(orderStr)) {
+                    setSelectedHours([orderStr]);
+                } else if (availableHours.length > 0) {
+                    // Yoksa ilkini seç (Güvenlik)
+                    setSelectedHours([availableHours[0]]);
+                }
+            }
+        } else {
+            // Liste boşsa varsayılan olarak ilk saati seç ki buton aktif olsun
+            if (availableHours.length > 0) {
+                // Eğer blok olabiliyorsa blok başlat, değilse ilk saat
+                if (canBeBlock) {
+                    setIsBlockMode(true);
+                    setSelectedHours([...availableHours]);
+                } else {
+                    setIsBlockMode(false);
+                    setSelectedHours([availableHours[0]]);
+                }
+            }
+        }
+
       } else {
         setStudents([]);
       }
@@ -132,19 +183,57 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const handleGenerate = () => {
-    if (selectedHours.length === 0) return;
+  // --- KOD ÜRETME ---
+  const handleGenerate = async () => {
+    if (selectedHours.length === 0) {
+        showAlert('warning', dictionary.error || "Uyarı", "Lütfen kod üretmek için bir saat seçiniz.");
+        return;
+    }
+
+    const targetHour = selectedHours[0]; 
     setQrLoading(true);
-    setTimeout(() => {
-        if (activeTab === 'QR') {
-            setGeneratedData(`UBYS-QR-${params.classId}-${Math.random().toString(36).substring(7)}`);
+    setGeneratedData(null); 
+
+    try {
+        const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({
+                serviceName: "GetConfirmationCode",
+                serviceCriteria: {
+                    scheduleId: params.scheduleId,
+                    scheduleorder: parseInt(targetHour),
+                    isblock: isBlockMode
+                }
+            })
+        });
+
+        const json = await response.json();
+        
+        if (json.Data) {
+            if (json.Data.ExceptionMessage) {
+                showAlert('warning', dictionary.error || "Uyarı", json.Data.ExceptionMessage);
+            } else if (json.Data.Data && json.Data.Data.Result) {
+                setGeneratedData(json.Data.Data.Result.toString());
+            } else {
+                showAlert('error', dictionary.error || "Hata", "Kod üretilemedi. Beklenmedik bir cevap alındı.");
+            }
         } else {
-            setGeneratedData(Math.floor(100000 + Math.random() * 900000).toString());
+             showAlert('error', dictionary.error || "Hata", "Sunucudan geçersiz yanıt alındı.");
         }
+
+    } catch (error) {
+        console.error("Kod üretme hatası:", error);
+        showAlert('error', dictionary.error || "Hata", "Sunucuya bağlanırken bir hata oluştu.");
+    } finally {
         setQrLoading(false);
-    }, 1000);
+    }
   };
 
+  // --- YOKLAMA DEĞİŞTİRME ---
   const toggleAttendanceHour = (studentId: number, hourKey: string) => {
     setStudents(curr => curr.map(s => {
         if (s.StudentId === studentId) {
@@ -169,17 +258,81 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
     }));
   };
 
-  const handleSave = () => {
+  // --- KAYDETME İŞLEMİ ---
+  const handleSave = async () => {
       const modifiedStudents = students.filter(s => s.isModified);
       
       if (modifiedStudents.length === 0) {
-          // UYARI ALERT (Değişiklik yok)
           showAlert('warning', dictionary.info, dictionary.noChange);
           return;
       }
-      
-      showAlert('success', dictionary.saved, `${modifiedStudents.length} ${dictionary.savedMessage}`);
-      
+
+      setSaving(true);
+
+      try {
+          const promises = [];
+
+          for (const student of modifiedStudents) {
+              if (isBlockMode) {
+                  // BLOK MODU
+                  const firstHour = availableHours[0];
+                  const isAttended = student.AttendanceHistory[firstHour] || false;
+
+                  const payload = {
+                      serviceName: "SaveStudentAttendancyForInstructor",
+                      serviceCriteria: {
+                          scheduleId: params.scheduleId,
+                          IsAttended: isAttended,
+                          scheduleorder: 1,
+                          studentId: student.StudentId,
+                          isblock: true
+                      }
+                  };
+
+                  promises.push(
+                      fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
+                          method: 'POST',
+                          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify(payload)
+                      })
+                  );
+
+              } else {
+                  // NORMAL MOD
+                  for (const hour of availableHours) {
+                      const isAttended = student.AttendanceHistory[hour] || false;
+                      const payload = {
+                          serviceName: "SaveStudentAttendancyForInstructor",
+                          serviceCriteria: {
+                              scheduleId: params.scheduleId,
+                              IsAttended: isAttended,
+                              scheduleorder: parseInt(hour),
+                              studentId: student.StudentId,
+                              isblock: false
+                          }
+                      };
+
+                      promises.push(
+                          fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
+                              method: 'POST',
+                              headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                              body: JSON.stringify(payload)
+                          })
+                      );
+                  }
+              }
+          }
+
+          await Promise.all(promises);
+          showAlert('success', dictionary.saved, `${modifiedStudents.length} ${dictionary.savedMessage}`);
+          setStudents(curr => curr.map(s => ({ ...s, isModified: false })));
+
+      } catch (error) {
+          console.error("Kaydetme hatası:", error);
+          showAlert('error', dictionary.error, "Kaydetme sırasında bir hata oluştu.");
+      } finally {
+          setSaving(false);
+      }
   };
 
   const filteredStudents = useMemo(() => {
@@ -192,16 +345,33 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
     );
   }, [students, searchQuery]);
 
+  // --- İSTATİSTİK ---
+  const stats = useMemo(() => {
+    const total = filteredStudents.length;
+    const present = filteredStudents.filter(s => {
+        if (isBlockMode) {
+            return availableHours.every(h => s.AttendanceHistory?.[h] === true);
+        } else {
+            return availableHours.some(h => s.AttendanceHistory?.[h] === true);
+        }
+    }).length;
+    
+    const absent = total - present;
+    return { total, present, absent };
+  }, [filteredStudents, availableHours, isBlockMode]);
+
   // --- ÖĞRENCİ KARTI ---
   const renderStudent = ({ item }: { item: Student }) => {
       const isAllPresent = availableHours.every(h => item.AttendanceHistory?.[h] === true);
+      const isAttendanceActive = !!generatedData; 
 
-      // Ortak Bilgi Alanı
       const StudentInfo = (
         <View className="flex-row items-center flex-1">
             <StudentAvatar imageCode={item.StudentImageCode} token={token} />
             <View className="ml-3 flex-1">
-                <Text className="font-bold text-slate-800 text-base" numberOfLines={1}>{item.Name} {item.Surname}</Text>
+                <Text className="font-bold text-base text-slate-800" numberOfLines={1}>
+                    {item.Name} {item.Surname}
+                </Text>
                 <Text className="text-slate-400 text-xs font-medium">{item.StudentNo}</Text>
             </View>
         </View>
@@ -210,17 +380,18 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
       if (isBlockMode) {
           // BLOK MODU (Yatay)
           return (
-            <View className="bg-white mx-5 mb-3 p-4 rounded-2xl border border-slate-200 flex-row items-center justify-between">
+            <View className={`bg-white mx-5 mb-3 p-4 rounded-2xl border flex-row items-center justify-between ${isAttendanceActive ? 'border-slate-300' : 'border-slate-200'}`}>
                 {StudentInfo}
                 <TouchableOpacity 
                     onPress={() => toggleBlockAttendance(item.StudentId)}
+                    disabled={!isAttendanceActive}
                     className={`ml-3 w-14 h-14 rounded-xl items-center justify-center border-2 ${
                         isAllPresent 
-                        ? 'bg-green-500 border-green-600' 
-                        : 'bg-slate-50 border-slate-200'
-                    }`}
+                            ? 'bg-green-600 border-green-700' 
+                            : 'bg-white border-slate-300'
+                    } ${!isAttendanceActive ? 'opacity-50' : ''}`} 
                 >
-                    {isAllPresent ? <CheckSquare size={28} color="white" /> : <Square size={28} color="#cbd5e1" />}
+                     {isAllPresent ? <CheckSquare size={28} color="white" /> : <Square size={28} color="#94a3b8" />}
                 </TouchableOpacity>
             </View>
           );
@@ -228,26 +399,29 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
 
       // NORMAL MOD (Dikey)
       return (
-        <View className="bg-white mx-5 mb-3 p-4 rounded-2xl border border-slate-200">
+        <View className={`bg-white mx-5 mb-3 p-4 rounded-2xl border ${isAttendanceActive ? 'border-slate-300' : 'border-slate-200'}`}>
             <View className="flex-row items-center mb-4">
                  {StudentInfo}
             </View>
             <View className="flex-row flex-wrap gap-3">
                 {availableHours.map(hour => {
                     const isPresent = item.AttendanceHistory?.[hour] === true;
+                    const isHourEditable = isAttendanceActive && selectedHours.includes(hour);
+
                     return (
                         <TouchableOpacity
                             key={hour}
                             onPress={() => toggleAttendanceHour(item.StudentId, hour)}
+                            disabled={!isHourEditable}
                             className={`w-12 h-12 rounded-xl items-center justify-center border-2 ${
                                 isPresent 
-                                ? 'bg-green-500 border-green-600' 
-                                : 'bg-slate-50 border-slate-200'
-                            }`}
+                                    ? 'bg-green-600 border-green-700' 
+                                    : 'bg-white border-slate-300'     
+                            } ${!isHourEditable ? 'opacity-60' : ''}`}
                         >
-                            <Text className={`font-bold text-lg ${isPresent ? 'text-white' : 'text-slate-400'}`}>
+                             <Text className={`font-bold text-lg ${isPresent ? 'text-white' : 'text-slate-600'}`}>
                                 {hour}
-                            </Text>
+                             </Text>
                         </TouchableOpacity>
                     );
                 })}
@@ -256,17 +430,30 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
       );
   };
 
-  // HEADER
+  // HEADER 
   const HeaderContent = (
-    <View className="px-5 pt-6 pb-2">
-        <View className="mb-6">
-            <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-slate-800 font-bold text-base flex-row items-center">
-                    <Clock size={16} className="text-slate-400 mr-2" /> {dictionary.courseHours}
-                </Text>
+    <View className="px-5 pt-4 pb-2">
+        <View className="bg-white rounded-3xl p-5 border border-slate-300 mb-6">
+            <View className="flex-row justify-between items-center mb-5">
+                <View className="flex-row items-center">
+                    <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-3">
+                        <Clock size={16} color="#2563eb" />
+                    </View>
+                    <View>
+                        <Text className="text-slate-800 font-bold text-sm uppercase tracking-wide">
+                            {dictionary.instructor?.hoursLabel || "Ders Ayarları"}
+                        </Text>
+                        <Text className="text-slate-400 text-[10px] font-bold">
+                            {isBlockMode ? dictionary.instructor?.blockMode : dictionary.instructor?.hourMode}
+                        </Text>
+                    </View>
+                </View>
+
                 {canBeBlock && (
-                    <View className="flex-row items-center bg-white px-3 py-1.5 rounded-full border border-slate-200">
-                        <Text className={`text-xs font-bold mr-2 ${isBlockMode ? 'text-blue-600' : 'text-slate-400'}`}>{dictionary.block}</Text>
+                    <View className="flex-row items-center bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
+                        <Text className={`text-xs font-bold mr-2 ${isBlockMode ? 'text-blue-600' : 'text-slate-400'}`}>
+                            {dictionary.block}
+                        </Text>
                         <Switch 
                             value={isBlockMode} 
                             onValueChange={(val) => {
@@ -280,63 +467,121 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
                     </View>
                 )}
             </View>
-            <View className="flex-row flex-wrap gap-3">
+
+            <View className="flex-row flex-wrap gap-2 mb-6">
                 {availableHours.map((hour) => {
                     const isSelected = selectedHours.includes(hour);
                     return (
                         <TouchableOpacity
                             key={hour}
                             onPress={() => {
-                                setGeneratedData(null);
+                                setGeneratedData(null); 
                                 if (isBlockMode) {
                                     setSelectedHours(selectedHours.length === availableHours.length ? [] : [...availableHours]);
                                 } else {
-                                    setSelectedHours(selectedHours.includes(hour) ? selectedHours.filter(h => h !== hour) : [...selectedHours, hour]);
+                                    setSelectedHours(selectedHours.includes(hour) ? [] : [hour]);
                                 }
                             }}
-                            className={`w-12 h-12 rounded-xl items-center justify-center border-2 ${isSelected ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-200'}`}
+                            className={`h-11 min-w-[44px] px-3 rounded-xl items-center justify-center border-2 ${
+                                isSelected 
+                                ? 'bg-blue-600 border-blue-600' 
+                                : 'bg-slate-50 border-slate-200'
+                            }`}
                         >
-                            <Text className={`font-bold ${isSelected ? 'text-white' : 'text-slate-400'}`}>{hour}</Text>
+                            <Text className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-400'}`}>
+                                {hour}. Ders
+                            </Text>
                         </TouchableOpacity>
                     );
                 })}
             </View>
-        </View>
 
-        <View className="flex-row gap-4 mb-6">
-            <TouchableOpacity 
-                onPress={() => handleGenerate()} 
-                disabled={selectedHours.length === 0}
-                className={`flex-1 py-3 rounded-xl items-center flex-row justify-center ${selectedHours.length === 0 ? 'bg-slate-300' : 'bg-slate-800'}`}
-            >
-                <Text className="text-white font-bold">{activeTab === 'QR' ? dictionary.createQR : dictionary.createCode}</Text>
-            </TouchableOpacity>
+            <View className="h-[1px] bg-slate-100 mb-5" />
 
-            <View className="flex-row bg-white border border-slate-200 rounded-xl overflow-hidden">
-                <TouchableOpacity onPress={() => { setActiveTab('QR'); setGeneratedData(null); }} className={`px-4 justify-center ${activeTab === 'QR' ? 'bg-blue-50' : ''}`}>
-                    <QrCode size={20} color={activeTab === 'QR' ? '#2563eb' : '#94a3b8'} />
+            <View className="flex-row gap-3">
+                <TouchableOpacity 
+                    onPress={() => handleGenerate()} 
+                    disabled={selectedHours.length === 0}
+                    className={`flex-1 py-3.5 rounded-xl items-center flex-row justify-center ${
+                        selectedHours.length === 0 ? 'bg-slate-100' : 'bg-slate-800'
+                    }`}
+                >
+                    <Text className={`font-bold ${selectedHours.length === 0 ? 'text-slate-400' : 'text-white'}`}>
+                        {activeTab === 'QR' ? dictionary.createQR : dictionary.createCode}
+                    </Text>
                 </TouchableOpacity>
-                <View className="w-[1px] bg-slate-200"/>
-                <TouchableOpacity onPress={() => { setActiveTab('CODE'); setGeneratedData(null); }} className={`px-4 justify-center ${activeTab === 'CODE' ? 'bg-blue-50' : ''}`}>
-                    <Hash size={20} color={activeTab === 'CODE' ? '#2563eb' : '#94a3b8'} />
-                </TouchableOpacity>
+
+                <View className="flex-row bg-slate-50 border border-slate-200 rounded-xl overflow-hidden h-[50px] items-center">
+                    <TouchableOpacity 
+                        onPress={() => { setActiveTab('QR'); setGeneratedData(null); }} 
+                        className={`h-full px-4 justify-center ${activeTab === 'QR' ? 'bg-white border-r border-slate-200' : ''}`}
+                    >
+                        <QrCode size={20} color={activeTab === 'QR' ? '#2563eb' : '#94a3b8'} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        onPress={() => { setActiveTab('CODE'); setGeneratedData(null); }} 
+                        className={`h-full px-4 justify-center ${activeTab === 'CODE' ? 'bg-white border-l border-slate-200' : ''}`}
+                    >
+                        <Hash size={20} color={activeTab === 'CODE' ? '#2563eb' : '#94a3b8'} />
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
 
         {qrLoading ? (
-            <ActivityIndicator className="mb-8" color="#2563eb" />
+             <View className="mb-6 bg-white p-6 rounded-3xl border border-slate-200 items-center justify-center h-48">
+                <ActivityIndicator size="large" color="#2563eb" />
+             </View>
         ) : generatedData && (
-            <View className="items-center bg-white p-6 rounded-3xl border border-slate-200 mb-8">
-                {activeTab === 'QR' ? <QRCode value={generatedData} size={200} /> : <Text className="text-5xl font-black text-slate-800 tracking-widest">{generatedData}</Text>}
-                <Text className="text-slate-400 text-xs mt-4 text-center">
-                    {(dictionary.joinInfo || "Öğrenciler {0} derse katılabilir.").replace("{0}", activeTab === 'QR' ? (dictionary.joinWithQR || "QR kodu okutarak") : (dictionary.joinWithCode || "kodu girerek"))}
-                </Text>
+            <View className="mb-6 bg-white p-6 rounded-3xl border border-blue-200 relative overflow-hidden">
+                <View className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-10 -mt-10" />
+                <View className="items-center">
+                    {activeTab === 'QR' ? (
+                        <View className="p-3 bg-white rounded-2xl border border-slate-100">
+                            <QRCode value={generatedData} size={180} />
+                        </View>
+                    ) : (
+                        <View className="py-4">
+                            <Text className="text-slate-400 text-xs font-bold tracking-[6px] text-center mb-1">{dictionary.lessonCode || "DERS KODU"}</Text>
+                            <Text className="text-5xl font-black text-slate-800 tracking-widest">{generatedData}</Text>
+                        </View>
+                    )}
+                    <Text className="text-slate-500 text-xs mt-4 text-center font-medium px-4">
+                        {(dictionary.joinInfo || "Öğrenciler {0} derse katılabilir.").replace("{0}", activeTab === 'QR' ? (dictionary.joinWithQR || "QR kodu okutarak") : (dictionary.joinWithCode || "kodu girerek"))}
+                    </Text>
+                </View>
             </View>
         )}
 
-        <View className="mb-2 mt-2">
-             <Text className="text-slate-800 font-bold text-lg mb-2">{dictionary.studentList}</Text>
-             <View className="flex-row items-center bg-white border border-slate-200 rounded-xl px-3 h-12">
+        <View className="mb-2">
+             <View className="flex-row justify-between items-center mb-3">
+                 <View className="flex-row items-center">
+                    <Text className="text-slate-800 font-bold text-lg mr-2">{dictionary.studentList}</Text>
+                    <TouchableOpacity 
+                        onPress={fetchStudents}
+                        disabled={loadingStudents}
+                        className="bg-slate-100 p-1.5 rounded-full border border-slate-200"
+                    >
+                        <RefreshCw size={16} color="#64748b" />
+                    </TouchableOpacity>
+                 </View>
+                 
+                 <View className="flex-row gap-2">
+                    <View className="bg-white border border-slate-200 px-2 py-1 rounded-lg">
+                        <Text className="text-slate-500 text-[10px] font-bold">{dictionary.absenteeism.total || "TOPLAM"}</Text>
+                        <Text className="text-slate-800 text-xs font-bold text-center">{stats.total}</Text>
+                    </View>
+                    <View className="bg-green-50 border border-green-200 px-2 py-1 rounded-lg">
+                        <Text className="text-green-600 text-[10px] font-bold">{dictionary.absenteeism.attended || "GELEN"}</Text>
+                        <Text className="text-green-800 text-xs font-bold text-center">{stats.present}</Text>
+                    </View>
+                     <View className="bg-red-50 border border-red-200 px-2 py-1 rounded-lg">
+                        <Text className="text-red-600 text-[10px] font-bold">{dictionary.absenteeism.absent || "GELMEYEN"}</Text>
+                        <Text className="text-red-800 text-xs font-bold text-center">{stats.absent}</Text>
+                    </View>
+                 </View>
+             </View>
+             <View className="flex-row items-center bg-white border border-slate-300 rounded-xl px-3 h-12">
                 <Search size={20} color="#94a3b8" />
                 <TextInput
                     placeholder={dictionary.searchPlaceholder}
@@ -358,9 +603,9 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-        <View className="px-4 py-3 flex-row items-center bg-white border-b border-slate-100 justify-between">
+        <View className="px-4 py-3 flex-row items-center bg-white border-b border-slate-200 justify-between">
             <View className="flex-row items-center">
-                <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 bg-slate-50 rounded-full border border-slate-100 mr-3">
+                <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 bg-slate-50 rounded-full border border-slate-200 mr-3">
                     <ArrowLeft size={20} color="#334155" />
                 </TouchableOpacity>
                 <View>
@@ -368,8 +613,16 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
                     <Text className="text-slate-400 text-[10px]">{courseName}</Text>
                 </View>
             </View>
-            <TouchableOpacity onPress={handleSave} className="bg-blue-600 px-4 py-2 rounded-lg">
-                <Text className="text-white font-bold text-sm">{dictionary.save}</Text>
+            <TouchableOpacity 
+                onPress={handleSave} 
+                disabled={saving}
+                className="bg-blue-600 px-4 py-2 rounded-lg"
+            >
+                {saving ? (
+                    <ActivityIndicator size="small" color="white" />
+                ) : (
+                    <Text className="text-white font-bold text-sm">{dictionary.save}</Text>
+                )}
             </TouchableOpacity>
         </View>
 
@@ -396,14 +649,13 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
             />
         )}
 
-        {/* --- CUSTOM ALERT BİLEŞENİ --- */}
         <CustomAlert
             visible={alertConfig.visible}
             type={alertConfig.type}
             title={alertConfig.title}
             message={alertConfig.message}
             onConfirm={closeAlert}
-            confirmText={dictionary.ok}
+            confirmText={dictionary.ok || "Tamam"}
         />
     </SafeAreaView>
   );

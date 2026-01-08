@@ -62,6 +62,8 @@ const translations = {
     welcome: "Hoş Geldiniz",
     mobileApp:"Mobil Uygulama",
     ok:"Tamam",
+    student:"Öğrenci",
+    lessonCode:"DERS KODU",
     idCard: {
     title: "Dijital Kimlik",
     uniName: "KASTAMONU ÜNİVERSİTESİ",
@@ -75,6 +77,14 @@ const translations = {
     loading: "Kart bilgileri yükleniyor...",
     error: "Kart bilgisi bulunamadı.",
     retry: "Tekrar Dene",
+    notFoundTitle: "Kart Bulunamadı",
+    missingIdError: "Kimlik numarası eksik olduğu için sorgulama yapılamadı.",
+    noRecordError: "Sistemde adınıza kayıtlı bir kart veya geçiş yetkisi bulunamadı.",
+    tcLabel: "T.C.",
+    accessCodeLabel: "TURNİKE GEÇİŞ KODU",
+    qrDesc: "Bu QR kodu üniversite giriş turnikelerinde ve yemekhanelerde okutarak geçiş yapabilirsiniz.",
+    fetchErrorTitle: "Hata",
+    fetchErrorMessage: "Kart bilgileri alınırken bir sorun oluştu."
   },
   sideMenu: {
     academicTitle: "AKADEMİK İŞLEMLER",
@@ -257,6 +267,8 @@ const translations = {
     welcome: "Welcome",
     mobileApp:"Mobile App",
     ok:"Ok",
+    student:"Student",
+    lessonCode:"LESSON CODE",
     idCard: {
     title: "Digital ID",
     uniName: "KASTAMONU UNIVERSITY",
@@ -270,6 +282,14 @@ const translations = {
     loading: "Loading card information...",
     error: "No card information found.",
     retry: "Retry",
+    notFoundTitle: "Card Not Found",
+    missingIdError: "Query could not be performed because the ID number is missing.",
+    noRecordError: "No registered card or access authorization found in the system.",
+    tcLabel: "T.R.",
+    accessCodeLabel: "TURNSTILE ACCESS CODE",
+    qrDesc: "You can use this QR code to pass through university turnstiles and cafeterias.",
+    fetchErrorTitle: "Error",
+    fetchErrorMessage: "An error occurred while fetching card information."
   },
   sideMenu: {
     academicTitle: "ACADEMIC OPERATIONS",
