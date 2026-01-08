@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (response.ok) {
         const data = await response.json();
         console.log("✅ Kullanıcı:", data.TitleNameSurname);
+        console.log("✅ Kullanıcı token:", cleanToken);
         
         // --- ROL KONTROLÜ (SADECE APPLICATION NAME İLE) ---
         let studentStatus = false;

@@ -15,6 +15,9 @@ import { StudentIDScreen } from './screens/StudentIDScreen';
 import { useDailyNotification } from './hooks/useDailyNotification';
 import { CourseScheduleScreen } from './screens/CourseScheduleScreen';
 import { AbsenteeismScreen } from './screens/AbsenteeismScreen';
+import { InstructorAttendanceScreen } from './screens/InstructorAttendanceScreen';
+import { InstructorManualAttendanceScreen } from './screens/InstructorManualAttendanceScreen';
+import { AttendanceManagerScreen } from './screens/AttendanceManagerScreen';
 
 const Stack = createNativeStackNavigator();
 // Bu ayar katı modu kapatır ve gereksiz uyarıyı engeller
@@ -25,6 +28,8 @@ configureReanimatedLogger({
 
 const AppNavigator = () => {
   const { language } = useLanguage();
+  useDailyNotification();
+
   
 
   return (
@@ -79,13 +84,30 @@ const AppNavigator = () => {
           options={{ headerShown: false, animation: 'slide_from_right' }} 
         />
 
+        <Stack.Screen 
+          name="InstructorAttendance" 
+          component={InstructorAttendanceScreen} 
+          options={{ headerShown: false }} 
+        />
+
+        <Stack.Screen 
+          name="InstructorManualAttendance" 
+          component={InstructorManualAttendanceScreen} 
+          options={{ headerShown: false }} 
+        />
+
+        <Stack.Screen 
+          name="AttendanceManager" 
+          component={AttendanceManagerScreen} 
+          options={{ headerShown: false }} 
+        />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
 
 export default function App() {
-  useDailyNotification();
   return (
     <LanguageProvider> 
       <AuthProvider>

@@ -72,7 +72,8 @@ const translations = {
     scan: "Doğrulama için okutunuz",
     cardId: "Kart No",
     loading: "Kart bilgileri yükleniyor...",
-    error: "Kart bilgisi bulunamadı."
+    error: "Kart bilgisi bulunamadı.",
+    retry: "Tekrar Dene"
   },
   sideMenu: {
     academicTitle: "AKADEMİK İŞLEMLER",
@@ -144,6 +145,23 @@ const translations = {
     calculating: "Veriler alınıyor...",
     error: "Hata oluştu."
   },
+  instructor:{
+    title: "Yoklama Listesi",
+    save: "Kaydet",
+    saved: "Kaydedildi",
+    error: "Hata",
+    blockMode: "Blok Modu",
+    hourMode: "Saat Bazlı Mod",
+    searchPlaceholder: "Öğrenci Ara...",
+    present: "GELEN",
+    absent: "GELMEYEN",
+    total: "MEVCUT",
+    hoursLabel: "DERS SAATLERİ",
+    yes: "VAR",
+    no: "YOK",
+    noStudent: "Öğrenci bulunamadı.",
+    search: "ARA"
+  },
   },
   en: {
     agenda: "Agenda",
@@ -214,7 +232,8 @@ const translations = {
     scan: "Scan for verification",
     cardId: "Card No",
     loading: "Loading card information...",
-    error: "No card information found."
+    error: "No card information found.",
+    retry: "Retry"
   },
   sideMenu: {
     academicTitle: "ACADEMIC OPERATIONS",
@@ -285,6 +304,23 @@ const translations = {
     noCourse: "No course records found.",
     calculating: "Fetching data...",
     error: "An error occurred."
+  },
+  instructor:{
+    title: "Attendance List",
+    save: "Save",
+    saved: "Saved",
+    error: "Error",
+    blockMode: "Block Mode",
+    hourMode: "Hour Mode",
+    searchPlaceholder: "Search Student...",
+    present: "PRESENT",
+    absent: "ABSENT",
+    total: "TOTAL",
+    hoursLabel: "CLASS HOURS",
+    yes: "YES",
+    no: "NO",
+    noStudent: "No student found.",
+    search: "SEARCH"
   },
   }
 };

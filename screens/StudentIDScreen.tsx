@@ -1,60 +1,48 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Image, Dimensions, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Share2, GraduationCap } from 'lucide-react-native';
+import { ArrowLeft, RefreshCw, User, CreditCard, ShieldCheck } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import QRCode from 'react-native-qrcode-svg'; // QR Kod için
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import QRCode from 'react-native-qrcode-svg';
 
-const { width } = Dimensions.get('window');
-
-// API'den dönen veri yapısı
+// API'den dönen veri tipi
 interface CardData {
   ad: string;
   soyad: string;
-  heX_KART_ID: string;      // QR Kod için kullanılacak
-  identitY_NO: string;      // TC No
-  decimaL_KART_ID: number;  // Kart Numarası
+  heX_KART_ID: string;
+  identitY_NO: string;
+  decimaL_KART_ID: number;
 }
 
+const { width } = Dimensions.get('window');
+
 export const StudentIDScreen = () => {
-  // Navigasyon hatası alıyorsanız App.tsx'te NavigationContainer içinde olduğundan emin olun.
-  const navigation = useNavigation(); 
+  const navigation = useNavigation();
+  const { userInfo } = useAuth(); // Kullanıcı bilgisini alıyoruz
   const { dictionary } = useLanguage();
-  
+
   const [cardData, setCardData] = useState<CardData | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  // --- DİNAMİK TC DEĞİŞKENİ ---
-  // Buraya test için geçerli bir TC veya öğrenciye ait bir veri girin.
-  const DYNAMIC_TC_NO = "15817094364"; 
-
-  const t = dictionary.idCard || {
-    title: "Dijital Kimlik",
-    uniName: "KASTAMONU ÜNİVERSİTESİ",
-    cardType: "KİMLİK KARTI",
-    studentNo: "Öğrenci No",
-    tcNo: "T.C. Kimlik No",
-    faculty: "Fakülte / Bölüm",
-    active: "Aktif Öğrenci",
-    scan: "Doğrulama için okutunuz",
-    cardId: "Kart No",
-    loading: "Kart bilgileri yükleniyor...",
-    error: "Kart bilgisi bulunamadı."
-  };
+  const [loading, setLoading] = useState(true);
+  
+  // Eğer AuthContext'te TC yoksa burayı test için elle doldurabilirsin:
+  const tcNo = "15817094364"
 
   useEffect(() => {
     fetchCardInfo();
   }, []);
 
   const fetchCardInfo = async () => {
-    if (!DYNAMIC_TC_NO) return;
+    if (!tcNo) {
+        Alert.alert("Hata", "TC Kimlik numarası bulunamadı.");
+        setLoading(false);
+        return;
+    }
 
     try {
       setLoading(true);
-      // API İsteği
-      const response = await fetch(`https://perioapi.kastamonu.edu.tr/api/periokart/kart-listesi/${DYNAMIC_TC_NO}`, {
+      const response = await fetch(`https://perioapi.kastamonu.edu.tr/api/periokart/kart-listesi/${tcNo}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -63,131 +51,128 @@ export const StudentIDScreen = () => {
 
       const json = await response.json();
 
-      // API dizi döndüğü için ilk elemanı alıyoruz
+      // API bir dizi (array) dönüyor, ilk elemanı alıyoruz
       if (Array.isArray(json) && json.length > 0) {
         setCardData(json[0]);
       } else {
         setCardData(null);
-        // Alert.alert("Bilgi", "Bu TC numarasına ait kart bulunamadı.");
       }
 
     } catch (error) {
-      console.error("Kart hatası:", error);
+      console.error("Kart bilgisi hatası:", error);
+      Alert.alert("Hata", "Kart bilgileri alınırken bir sorun oluştu.");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-slate-100">
-      
-      {/* HEADER */}
-      <View className="px-4 py-3 bg-white flex-row items-center justify-between shadow-sm z-10">
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()}
-          className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center border border-slate-100 active:bg-slate-100"
-        >
-          <ArrowLeft size={20} color="#334155" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold text-slate-800">{t.title}</Text>
-        <TouchableOpacity className="w-10 h-10 items-center justify-center opacity-50">
-             <Share2 size={20} color="#334155" />
-        </TouchableOpacity>
-      </View>
-
-     <ScrollView 
-        contentContainerStyle={{ 
-            flexGrow: 1, 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            padding: 20,
-            paddingBottom: 40 
-        }}
+  const renderHeader = () => (
+    <View className="px-5 py-4 bg-white flex-row items-center justify-between shadow-sm z-10">
+      <TouchableOpacity 
+        onPress={() => navigation.goBack()}
+        className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center border border-slate-100 active:bg-slate-100"
       >
+        <ArrowLeft size={20} color="#334155" />
+      </TouchableOpacity>
+      <Text className="text-lg font-bold text-slate-800">Dijital Kimlik</Text>
+      <TouchableOpacity 
+        onPress={fetchCardInfo}
+        className="w-10 h-10 bg-slate-50 rounded-full items-center justify-center border border-slate-100 active:bg-slate-100"
+      >
+        <RefreshCw size={20} color="#334155" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
+      {renderHeader()}
+
+      <ScrollView contentContainerStyle={{ padding: 20, alignItems: 'center' }}>
         
-        {/* --- YÜKLENİYOR DURUMU --- */}
         {loading ? (
-            <View className="items-center justify-center">
-                <ActivityIndicator size="large" color="#b91c1c" />
-                <Text className="mt-4 text-slate-500">{t.loading}</Text>
+            <View className="mt-20 items-center">
+                <ActivityIndicator size="large" color="#2563eb" />
+                <Text className="mt-4 text-slate-500">Kart bilgileri yükleniyor...</Text>
             </View>
         ) : !cardData ? (
-            // --- VERİ YOKSA ---
-            <View className="items-center justify-center opacity-50">
-                 <GraduationCap size={64} color="#cbd5e1" />
-                 <Text className="mt-4 text-slate-400 font-bold">{t.error}</Text>
-                 <Text className="text-xs text-slate-400 mt-1">TC: {DYNAMIC_TC_NO}</Text>
+            <View className="mt-20 items-center px-6">
+                <CreditCard size={64} color="#cbd5e1" />
+                <Text className="mt-4 text-slate-800 font-bold text-lg text-center">Kart Bulunamadı</Text>
+                <Text className="mt-2 text-slate-400 text-center">
+                    Sistemde adınıza kayıtlı bir kart veya geçiş yetkisi bulunamadı.
+                </Text>
             </View>
         ) : (
-            // --- KİMLİK KARTI (Veri varsa) ---
-            <View 
-                className="bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-200"
-                style={{ width: width - 40 }} 
-            >
-                
-                {/* BAŞLIK ALANI (Kırmızı) */}
-                <View className="bg-red-700 p-6 items-center justify-center">
-                    <View className="bg-white/20 p-3 rounded-full mb-3">
-                        <GraduationCap size={32} color="white" />
+            <>
+                {/* --- DİJİTAL KİMLİK KARTI TASARIMI --- */}
+                <View 
+                    className="w-full bg-blue-900 rounded-3xl overflow-hidden shadow-xl"
+                    style={{ height: 240, elevation: 10 }} // Android gölgesi için
+                >
+                    {/* Arka Plan Deseni (Süsleme) */}
+                    <View className="absolute top-0 right-0 w-40 h-40 bg-blue-800 rounded-full -mr-10 -mt-10 opacity-50" />
+                    <View className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500 rounded-full -ml-10 -mb-10 opacity-20" />
+
+                    {/* Kart İçeriği */}
+                    <View className="flex-1 p-6 justify-between">
+                        
+                        {/* Üst Kısım: Logo ve Başlık */}
+                        <View className="flex-row items-center gap-3">
+                            <View className="w-12 h-12 bg-white rounded-full items-center justify-center">
+                                {/* Logo yerine ikon veya image konabilir */}
+                                <ShieldCheck size={24} color="#1e3a8a" />
+                            </View>
+                            <View>
+                                <Text className="text-white font-bold text-sm opacity-80">T.C.</Text>
+                                <Text className="text-white font-extrabold text-lg leading-6">KASTAMONU{"\n"}ÜNİVERSİTESİ</Text>
+                            </View>
+                        </View>
+
+                        {/* Orta Kısım: Öğrenci Bilgisi */}
+                        <View className="flex-row items-end justify-between mt-4">
+                            <View>
+                                <Text className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-1">ÖĞRENCİ / STUDENT</Text>
+                                <Text className="text-white font-black text-2xl shadow-sm">
+                                    {cardData.ad} {cardData.soyad}
+                                </Text>
+                                <Text className="text-blue-100 font-medium text-sm mt-1 letter-spacing-1">
+                                    {cardData.identitY_NO}
+                                </Text>
+                            </View>
+                        </View>
+                        
                     </View>
-                    <Text className="text-white font-bold text-lg text-center uppercase">
-                        {t.uniName}
-                    </Text>
-                    <View className="mt-2 bg-white/20 px-3 py-1 rounded-md">
-                        <Text className="text-white text-[10px] font-bold uppercase tracking-widest">
-                            {t.cardType}
-                        </Text>
-                    </View>
+
+                    {/* Alt Şerit */}
+                    <View className="h-2 bg-red-600 w-full" />
                 </View>
 
-                {/* ÖĞRENCİ BİLGİLERİ */}
-                <View className="items-center py-6 border-b border-slate-100 px-4">
-                    {/* İsim Soyisim */}
-                    <Text className="text-2xl font-black text-slate-800 text-center uppercase mb-2">
-                        {cardData.ad} {cardData.soyad}
+                {/* --- QR KOD ALANI --- */}
+                <View className="mt-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 items-center w-full">
+                    <Text className="text-slate-400 font-bold text-xs uppercase mb-4 tracking-widest">
+                        TURNİKE GEÇİŞ KODU
                     </Text>
                     
-                    {/* TC Kimlik No */}
-                    <View className="bg-slate-100 px-3 py-1 rounded-md mb-2">
-                        <Text className="text-slate-500 font-bold text-xs tracking-widest">
-                            {cardData.identitY_NO}
-                        </Text>
+                    {/* QR Kodun Kendisi */}
+                    <View className="p-2 border-2 border-slate-100 rounded-xl">
+                        <QRCode
+                            value={cardData.decimaL_KART_ID.toString()} // Kartın Hex ID'sini QR'a çeviriyoruz
+                            size={180}
+                            color="black"
+                            backgroundColor="white"
+                        />
                     </View>
 
-                    {/* Kart Numarası (Decimal) */}
-                    <Text className="text-slate-400 text-[10px] font-medium uppercase">
-                        {t.cardId}: {cardData.decimaL_KART_ID}
+                    <Text className="text-slate-800 font-bold text-lg mt-4">
+                        {cardData.decimaL_KART_ID}
+                    </Text>
+                    <Text className="text-slate-400 text-xs text-center mt-2 px-4">
+                        Bu QR kodu üniversite giriş turnikelerinde ve yemekhanelerde okutarak geçiş yapabilirsiniz.
                     </Text>
                 </View>
-
-                
-                {/* QR KOD ALANI */}
-                <View className="bg-slate-50 p-8 items-center justify-center">
-                    <View className="bg-white p-3 rounded-xl shadow-sm mb-4 border border-slate-100">
-                        {/* QR Kodun düzgün çalışması için heX_KART_ID'nin dolu olması gerekir */}
-                        {cardData.heX_KART_ID ? (
-                            <QRCode 
-                                value={cardData.heX_KART_ID} 
-                                size={200} 
-                                color="black" 
-                                backgroundColor="white"
-                            />
-                        ) : (
-                            <Text className="text-red-500 text-xs">QR Kod Verisi Yok</Text>
-                        )}
-                    </View>
-                    <Text className="text-slate-400 text-[10px] text-center uppercase tracking-wide">
-                        {t.scan}
-                    </Text>
-                    <Text className="text-slate-300 text-[9px] text-center font-mono mt-1">
-                        HEX: {cardData.heX_KART_ID}
-                    </Text>
-                </View>
-
-            </View>
+            </>
         )}
-
-        <View className="h-10" />
       </ScrollView>
     </SafeAreaView>
   );
