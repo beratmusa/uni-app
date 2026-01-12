@@ -31,19 +31,19 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [imageHeight, setImageHeight] = useState(250);
 
-
+  // Veri değiştiğinde resmi ayarla (Artık Duyuruların resmi de burada yakalanacak)
   useEffect(() => {
     setActiveImage(data?.image || null);
   }, [data]);
 
-  // Resim değiştiğinde boyut hesaplama
+  // Resim boyutunu hesapla
   useEffect(() => {
     if (activeImage) {
       Image.getSize(activeImage, (w, h) => {
         const newHeight = (screenWidth / w) * h;
         setImageHeight(newHeight);
       }, (error) => {
-        console.log("Resim boyutu alınamadı:", error);
+        console.log("Resim boyutu alınamadı veya resim yok:", error);
       });
     }
   }, [activeImage]);
@@ -60,8 +60,18 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
     }
   };
 
+  // --- İÇERİĞİ İKİ YANA YASLAMA VE STİLLER ---
   const tagsStyles = {
-    p: { fontSize: 16, lineHeight: 24, color: '#374151', marginBottom: 12 },
+    p: { 
+      fontSize: 16, 
+      lineHeight: 24, 
+      color: '#374151', 
+      marginBottom: 12,
+      textAlign: 'justify' as const // Metni iki yana yaslar
+    },
+    div: {
+      textAlign: 'justify' as const // div içindeki metinleri de yaslar
+    },
     a: { color: '#2563eb', textDecorationLine: 'none' },
     img: { width: '100%', borderRadius: 12, marginVertical: 10 },
   };
@@ -97,45 +107,36 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
           </TouchableOpacity>
         </View>
 
-        {/* İÇERİK */}
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false} bounces={false}>
           
+          {/* RESİM ALANI (Hem Duyuru hem Gündem resimleri burada görünür) */}
           {activeImage && (
             <View className="w-full bg-gray-50 relative">
               <Image 
                 source={{ uri: activeImage }} 
                 style={{ width: screenWidth, height: imageHeight }}
-                resizeMode="contain"
+                resizeMode="cover" // Resmin alanı daha iyi doldurması için cover yaptık
               />
             </View>
           )}
 
           <View className="p-5 pb-20">
 
-            {/* 2. GALERİ */}
+            {/* GALERİ */}
             {allImages.length > 1 && (
               <View className="mb-6">
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  className="-ml-1"
-                >
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-ml-1">
                   {allImages.map((imgUrl, index) => {
                     const isActive = imgUrl === activeImage;
                     return (
                       <TouchableOpacity 
                         key={index} 
                         onPress={() => setActiveImage(imgUrl)}
-                        activeOpacity={0.8} 
                         className={`mr-3 rounded-xl overflow-hidden border-2 ${
                           isActive ? 'border-blue-600' : 'border-transparent'
                         }`}
                       >
-                        <Image 
-                          source={{ uri: imgUrl }} 
-                          className="w-24 h-24 bg-gray-100"
-                          resizeMode="cover"
-                        />
+                        <Image source={{ uri: imgUrl }} className="w-24 h-24 bg-gray-100" resizeMode="cover" />
                       </TouchableOpacity>
                     );
                   })}
@@ -143,7 +144,7 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
               </View>
             )}
 
-            {/* 3. META BİLGİLER */}
+            {/* META BİLGİLER */}
             <View className="flex-row items-center mb-4 space-x-4">
               <View className="flex-row items-center bg-blue-50 px-3 py-1 rounded-lg">
                 <Calendar size={14} color="#2563eb" />
@@ -160,12 +161,12 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
               )}
             </View>
 
-            {/* 4. BAŞLIK */}
+            {/* BAŞLIK */}
             <Text className="text-2xl font-extrabold text-gray-900 leading-8 mb-6">
               {data.title}
             </Text>
 
-            {/* 5. METİN */}
+            {/* METİN İÇERİĞİ (İki yana yaslanmış) */}
             {data.content ? (
               <RenderHtml
                 contentWidth={screenWidth - 40}
@@ -182,7 +183,6 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
           </View>
         </ScrollView>
       </View>
-      
       <StatusBar style="dark" />
     </Modal>
   );

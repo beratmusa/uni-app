@@ -391,7 +391,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                             {/* EKSTRA: Eğer Hem Öğrenci Hem Hocaysa "Ders Aç" Butonu Görünür */}
                             {isInstructor && (
                                 <TouchableOpacity 
-                                    onPress={() => { onClose(); navigation.navigate('CreateCourseScreen'); }} 
+                                    onPress={() => { onClose(); navigation.navigate('InstructorAttendance'); }} 
                                     className="flex-row items-center p-3 rounded-lg active:bg-red-50 mt-1"
                                 >
                                     <View className="bg-red-100 p-1 rounded mr-3">
@@ -409,7 +409,10 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                     ) : (
                       // DURUM B: SADECE HOCA (Tek Buton)
                       <TouchableOpacity 
-                          onPress={handleInstructorAttendance}
+                          onPress={() => {
+                              onClose();
+                              navigation.navigate('InstructorAttendance');
+                          }}
                           className="flex-row items-center p-4 rounded-xl active:bg-orange-50 border border-transparent active:border-orange-100"
                       >
                         <View className="opacity-60 text-gray-700"><Briefcase size={20} /></View>

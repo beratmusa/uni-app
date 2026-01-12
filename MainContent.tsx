@@ -104,15 +104,46 @@ export default function MainContent() {
 
   // --- MODAL AÇMA FONKSİYONLARI ---
 
-  const handleAnnouncementClick = (item: HaberItem) => {
-    setSelectedItem({
+  const handleAnnouncementClick = async (item: HaberItem) => {
+    // 1. Önce elimizdeki temel verilerle modalı hemen açalım (Kullanıcı bekletmemek için)
+    const initialData: DetailData = {
       title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
       date: formatDate(item.baslamaZamani),
-      content: language === 'tr' ? (item.icerikTR || item.icerikEN) : (item.icerikEN || item.icerikTR || "<p>Content not available</p>"),
+      content: language === 'tr' ? (item.icerikTR || item.icerikEN) : (item.icerikEN || item.icerikTR),
       category: getCategoryName(item.kategori),
-      image: null
-    });
+      image: item.haberDuyuruFoto, // Ana listeden gelen kapak fotoğrafı
+      gallery: []
+    };
+    
+    setSelectedItem(initialData);
     setModalVisible(true);
+
+    try {
+      // 2. Detay API'sine istek atalım
+      const response = await fetch(`https://testapi.kastamonu.edu.tr/api/haberduyuru/${item.id}`);
+      const json = await response.json();
+      const detailData = json.data;
+
+      if (detailData) {
+        // 3. API'den gelen fotoğrafları ve detaylı içeriği yerleştirelim
+        setSelectedItem({
+          ...initialData,
+          title: language === 'tr' 
+            ? (detailData.baslikTR || initialData.title) 
+            : (detailData.baslikEN || initialData.title),
+          content: language === 'tr' 
+            ? (detailData.icerikTR || initialData.content) 
+            : (detailData.icerikEN || initialData.content),
+          // API'den dönen 'haberFotolar' dizisini galeriye aktarıyoruz
+          gallery: detailData.haberFotolar || [],
+          // Eğer detayda farklı bir ana resim istenirse diye:
+          image: detailData.haberFotolar?.[0] || initialData.image 
+        });
+      }
+    } catch (error) {
+      console.error("Duyuru detay çekme hatası:", error);
+      // Hata olsa bile modal kapanmaz, başlangıç verisiyle kalır.
+    }
   };
 
   const handleEventClick = (item: EtkinlikItem) => {
