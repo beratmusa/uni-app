@@ -12,7 +12,7 @@ interface RouteParams {
   classId: number;
   scheduleId: number;
   courseName: string;
-  courseHours: { [key: string]: string };
+  courseHours: { [key: string]: string }; // Örn: { "1": "08:30-09:15", "2": "09:30-10:15" }
 }
 
 interface Student {
@@ -22,8 +22,8 @@ interface Student {
   StudentNo: string;
   StudentImageCode?: string;
   AttendanceHistory: { [key: string]: boolean };
-  Isblock?: boolean;
-  ScheduleOrder?: number; // API'den gelen saat bilgisi
+  Isblock?: boolean; 
+  ScheduleOrder?: number;
   isModified?: boolean;
 }
 
@@ -72,16 +72,21 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
   const params = route.params as RouteParams;
   const courseName = params?.courseName || dictionary.courseManagement || "Ders Yönetimi";
 
-  const availableHours = Object.keys(params?.courseHours || {}).filter(k => k !== "0").sort();
-  const canBeBlock = Object.keys(params?.courseHours || {}).includes("0");
+  // --- SAAT HESAPLAMA ---
+  const allKeys = Object.keys(params?.courseHours || {});
+  
+  const availableHours = allKeys
+      .filter(k => k !== "0")
+      .sort((a, b) => parseInt(a) - parseInt(b));
+
+  const canBeBlock = allKeys.includes("0");
 
   // --- STATE INIT ---
-  // İlk açılışta varsayılan değerler
   const [isBlockMode, setIsBlockMode] = useState(canBeBlock);
+  const [isLockedBlockMode, setIsLockedBlockMode] = useState(false);
+
   const [selectedHours, setSelectedHours] = useState<string[]>(
-      canBeBlock 
-          ? [...availableHours] 
-          : (availableHours.length > 0 ? [availableHours[0]] : [])
+      (!canBeBlock && availableHours.length > 0) ? [availableHours[0]] : []
   );
 
   const [activeTab, setActiveTab] = useState<'QR' | 'CODE'>('CODE');
@@ -132,44 +137,34 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
         const studentList = json.Data.Data;
         setStudents(studentList);
 
-        // --- GÜNCELLEME: API Verisine Göre Saat Seçimi ---
         if (studentList.length > 0) {
             const firstStudent = studentList[0];
-            const scheduleOrder = firstStudent.ScheduleOrder || 0; // API'den gelen değer
-
-            if (scheduleOrder === 0) {
-                // BLOK MODU (API 0 Döndüyse)
-                if (canBeBlock) {
-                    setIsBlockMode(true);
-                    setSelectedHours([...availableHours]); // Tümünü seç
-                } else {
-                    // Blok olamıyorsa ilk saati seç
-                    setIsBlockMode(false);
-                    if (availableHours.length > 0) setSelectedHours([availableHours[0]]);
-                }
+            
+            if (firstStudent.Isblock === true) {
+                setIsBlockMode(true);
+                setSelectedHours([]); 
+                setIsLockedBlockMode(true); 
             } else {
-                // NORMAL MOD (Belirli bir saat varsa örn: 2)
                 setIsBlockMode(false);
+                setIsLockedBlockMode(false);
+
+                const scheduleOrder = firstStudent.ScheduleOrder || 0;
                 const orderStr = scheduleOrder.toString();
-                // Eğer gelen saat bizim saat listemizde varsa onu seç
-                if (availableHours.includes(orderStr)) {
+
+                if (scheduleOrder > 0 && availableHours.includes(orderStr)) {
                     setSelectedHours([orderStr]);
                 } else if (availableHours.length > 0) {
-                    // Yoksa ilkini seç (Güvenlik)
                     setSelectedHours([availableHours[0]]);
                 }
             }
         } else {
-            // Liste boşsa varsayılan olarak ilk saati seç ki buton aktif olsun
-            if (availableHours.length > 0) {
-                // Eğer blok olabiliyorsa blok başlat, değilse ilk saat
-                if (canBeBlock) {
-                    setIsBlockMode(true);
-                    setSelectedHours([...availableHours]);
-                } else {
-                    setIsBlockMode(false);
-                    setSelectedHours([availableHours[0]]);
-                }
+            setIsLockedBlockMode(false);
+            if (canBeBlock) {
+                setIsBlockMode(true);
+                setSelectedHours([]);
+            } else if (availableHours.length > 0) {
+                setIsBlockMode(false);
+                setSelectedHours([availableHours[0]]);
             }
         }
 
@@ -183,14 +178,20 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
     }
   };
 
-  // --- KOD ÜRETME ---
+  // --- KOD ÜRETME (GÜNCELLENDİ: SÜRE HESAPLAMA) ---
   const handleGenerate = async () => {
-    if (selectedHours.length === 0) {
+    if (!isBlockMode && selectedHours.length === 0) {
         showAlert('warning', dictionary.error || "Uyarı", "Lütfen kod üretmek için bir saat seçiniz.");
         return;
     }
 
-    const targetHour = selectedHours[0]; 
+    let targetHour = "1"; 
+    if (!isBlockMode && selectedHours.length > 0) {
+        targetHour = selectedHours[0];
+    } else if (isBlockMode && selectedHours.length > 0) {
+        targetHour = selectedHours[0];
+    }
+
     setQrLoading(true);
     setGeneratedData(null); 
 
@@ -217,7 +218,54 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
             if (json.Data.ExceptionMessage) {
                 showAlert('warning', dictionary.error || "Uyarı", json.Data.ExceptionMessage);
             } else if (json.Data.Data && json.Data.Data.Result) {
-                setGeneratedData(json.Data.Data.Result.toString());
+                
+                if (activeTab === 'QR') {
+                    // --- QR SÜRE HESAPLAMA ---
+                    let expirationDate = new Date();
+                    
+                    // Varsayılan: Şu an + 15 dk
+                    expirationDate.setMinutes(expirationDate.getMinutes() + 15);
+
+                    // Eğer ders saatleri bilgisi varsa, gerçek bitiş saatini bulmaya çalış
+                    try {
+                        // Seçilen son saati bul (Blok veya Normal)
+                        // Normal modda: selectedHours[0]
+                        // Blok modda: availableHours'un sonuncusu (en son dersin bitişi)
+                        const lastHourKey = isBlockMode && availableHours.length > 0 
+                            ? availableHours[availableHours.length - 1] 
+                            : targetHour;
+
+                        const timeString = params.courseHours?.[lastHourKey]; // Örn: "08:30-09:15"
+
+                        if (timeString && timeString.includes("-")) {
+                            const endTimeStr = timeString.split("-")[1].trim(); // "09:15"
+                            const [endHour, endMinute] = endTimeStr.split(":").map(Number);
+
+                            if (!isNaN(endHour) && !isNaN(endMinute)) {
+                                const lessonEndDate = new Date();
+                                lessonEndDate.setHours(endHour, endMinute, 0, 0);
+                                
+                                // Ders bitişine 15 dakika ekle
+                                lessonEndDate.setMinutes(lessonEndDate.getMinutes() + 15);
+                                expirationDate = lessonEndDate;
+                            }
+                        }
+                    } catch (err) {
+                        console.log("Saat hesaplama hatası, varsayılan kullanılıyor.", err);
+                    }
+
+                    const qrPayload = {
+                        scheduleId: params.scheduleId,
+                        scheduleorder: parseInt(targetHour),
+                        isblock: isBlockMode,
+                        timestamp: new Date().toISOString(), // Oluşturulma zamanı
+                        expirationDate: expirationDate.toISOString() // Geçerlilik bitiş zamanı
+                    };
+                    setGeneratedData(JSON.stringify(qrPayload));
+                } else {
+                    setGeneratedData(json.Data.Data.Result.toString());
+                }
+
             } else {
                 showAlert('error', dictionary.error || "Hata", "Kod üretilemedi. Beklenmedik bir cevap alındı.");
             }
@@ -233,7 +281,6 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
     }
   };
 
-  // --- YOKLAMA DEĞİŞTİRME ---
   const toggleAttendanceHour = (studentId: number, hourKey: string) => {
     setStudents(curr => curr.map(s => {
         if (s.StudentId === studentId) {
@@ -248,17 +295,28 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
   const toggleBlockAttendance = (studentId: number) => {
     setStudents(curr => curr.map(s => {
         if (s.StudentId === studentId) {
-            const allPresent = availableHours.every(h => s.AttendanceHistory?.[h] === true);
+            let allPresent = false;
+            if (availableHours.length > 0) {
+                allPresent = availableHours.every(h => s.AttendanceHistory?.[h] === true);
+            } else {
+                allPresent = s.AttendanceHistory?.["1"] === true;
+            }
+
             const target = !allPresent;
             let newHistory = { ...s.AttendanceHistory };
-            availableHours.forEach(h => newHistory[h] = target);
+            
+            if (availableHours.length > 0) {
+                availableHours.forEach(h => newHistory[h] = target);
+            } else {
+                newHistory["1"] = target;
+            }
+
             return { ...s, AttendanceHistory: newHistory, isModified: true };
         }
         return s;
     }));
   };
 
-  // --- KAYDETME İŞLEMİ ---
   const handleSave = async () => {
       const modifiedStudents = students.filter(s => s.isModified);
       
@@ -274,8 +332,7 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
 
           for (const student of modifiedStudents) {
               if (isBlockMode) {
-                  // BLOK MODU
-                  const firstHour = availableHours[0];
+                  const firstHour = availableHours.length > 0 ? availableHours[0] : "1"; 
                   const isAttended = student.AttendanceHistory[firstHour] || false;
 
                   const payload = {
@@ -283,7 +340,7 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
                       serviceCriteria: {
                           scheduleId: params.scheduleId,
                           IsAttended: isAttended,
-                          scheduleorder: 1,
+                          scheduleorder: 1, 
                           studentId: student.StudentId,
                           isblock: true
                       }
@@ -298,7 +355,6 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
                   );
 
               } else {
-                  // NORMAL MOD
                   for (const hour of availableHours) {
                       const isAttended = student.AttendanceHistory[hour] || false;
                       const payload = {
@@ -345,12 +401,15 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
     );
   }, [students, searchQuery]);
 
-  // --- İSTATİSTİK ---
   const stats = useMemo(() => {
     const total = filteredStudents.length;
     const present = filteredStudents.filter(s => {
         if (isBlockMode) {
-            return availableHours.every(h => s.AttendanceHistory?.[h] === true);
+            if (availableHours.length > 0) {
+                return availableHours.every(h => s.AttendanceHistory?.[h] === true);
+            } else {
+                return s.AttendanceHistory?.["1"] === true;
+            }
         } else {
             return availableHours.some(h => s.AttendanceHistory?.[h] === true);
         }
@@ -360,10 +419,19 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
     return { total, present, absent };
   }, [filteredStudents, availableHours, isBlockMode]);
 
-  // --- ÖĞRENCİ KARTI ---
   const renderStudent = ({ item }: { item: Student }) => {
-      const isAllPresent = availableHours.every(h => item.AttendanceHistory?.[h] === true);
       const isAttendanceActive = !!generatedData; 
+
+      let isAllPresent = false;
+      if (isBlockMode) {
+          if (availableHours.length > 0) {
+              isAllPresent = availableHours.every(h => item.AttendanceHistory?.[h] === true);
+          } else {
+              isAllPresent = item.AttendanceHistory?.["1"] === true;
+          }
+      } else {
+          isAllPresent = availableHours.every(h => item.AttendanceHistory?.[h] === true);
+      }
 
       const StudentInfo = (
         <View className="flex-row items-center flex-1">
@@ -378,7 +446,6 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
       );
 
       if (isBlockMode) {
-          // BLOK MODU (Yatay)
           return (
             <View className={`bg-white mx-5 mb-3 p-4 rounded-2xl border flex-row items-center justify-between ${isAttendanceActive ? 'border-slate-300' : 'border-slate-200'}`}>
                 {StudentInfo}
@@ -397,7 +464,6 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
           );
       }
 
-      // NORMAL MOD (Dikey)
       return (
         <View className={`bg-white mx-5 mb-3 p-4 rounded-2xl border ${isAttendanceActive ? 'border-slate-300' : 'border-slate-200'}`}>
             <View className="flex-row items-center mb-4">
@@ -430,7 +496,6 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
       );
   };
 
-  // HEADER 
   const HeaderContent = (
     <View className="px-5 pt-4 pb-2">
         <View className="bg-white rounded-3xl p-5 border border-slate-300 mb-6">
@@ -457,8 +522,12 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
                         <Switch 
                             value={isBlockMode} 
                             onValueChange={(val) => {
+                                if (isLockedBlockMode && !val) {
+                                    showAlert('warning', dictionary.warning || "Uyarı", "Bu ders blok olarak işlendiği için saatlik sisteme çevrilemez.");
+                                    return;
+                                }
                                 setIsBlockMode(val);
-                                setSelectedHours(val ? [...availableHours] : []);
+                                setSelectedHours(val ? [] : []);
                                 setGeneratedData(null);
                             }}
                             trackColor={{ false: "#e2e8f0", true: "#93c5fd" }}
@@ -468,45 +537,49 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
                 )}
             </View>
 
-            <View className="flex-row flex-wrap gap-2 mb-6">
-                {availableHours.map((hour) => {
-                    const isSelected = selectedHours.includes(hour);
-                    return (
-                        <TouchableOpacity
-                            key={hour}
-                            onPress={() => {
-                                setGeneratedData(null); 
-                                if (isBlockMode) {
-                                    setSelectedHours(selectedHours.length === availableHours.length ? [] : [...availableHours]);
-                                } else {
-                                    setSelectedHours(selectedHours.includes(hour) ? [] : [hour]);
-                                }
-                            }}
-                            className={`h-11 min-w-[44px] px-3 rounded-xl items-center justify-center border-2 ${
-                                isSelected 
-                                ? 'bg-blue-600 border-blue-600' 
-                                : 'bg-slate-50 border-slate-200'
-                            }`}
-                        >
-                            <Text className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-400'}`}>
-                                {hour}. Ders
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </View>
+            {availableHours.length > 0 && (
+                <>
+                    <View className="flex-row flex-wrap gap-2 mb-6">
+                        {availableHours.map((hour) => {
+                            const isSelected = selectedHours.includes(hour);
+                            const isDisabled = isBlockMode; 
 
-            <View className="h-[1px] bg-slate-100 mb-5" />
+                            return (
+                                <TouchableOpacity
+                                    key={hour}
+                                    disabled={isDisabled}
+                                    onPress={() => {
+                                        setGeneratedData(null); 
+                                        if (!isBlockMode) {
+                                            setSelectedHours(selectedHours.includes(hour) ? [] : [hour]);
+                                        }
+                                    }}
+                                    className={`h-11 min-w-[44px] px-3 rounded-xl items-center justify-center border-2 ${
+                                        isSelected 
+                                        ? 'bg-blue-600 border-blue-600' 
+                                        : (isDisabled ? 'bg-slate-50 border-slate-200 opacity-50' : 'bg-slate-50 border-slate-200')
+                                    }`}
+                                >
+                                    <Text className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-400'}`}>
+                                        {hour} {dictionary.hour || "Saat"}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+                    <View className="h-[1px] bg-slate-100 mb-5" />
+                </>
+            )}
 
             <View className="flex-row gap-3">
                 <TouchableOpacity 
                     onPress={() => handleGenerate()} 
-                    disabled={selectedHours.length === 0}
+                    disabled={!isBlockMode && selectedHours.length === 0}
                     className={`flex-1 py-3.5 rounded-xl items-center flex-row justify-center ${
-                        selectedHours.length === 0 ? 'bg-slate-100' : 'bg-slate-800'
+                        (!isBlockMode && selectedHours.length === 0) ? 'bg-slate-300' : 'bg-slate-800'
                     }`}
                 >
-                    <Text className={`font-bold ${selectedHours.length === 0 ? 'text-slate-400' : 'text-white'}`}>
+                    <Text className={`font-bold ${(!isBlockMode && selectedHours.length === 0) ? 'text-slate-500' : 'text-white'}`}>
                         {activeTab === 'QR' ? dictionary.createQR : dictionary.createCode}
                     </Text>
                 </TouchableOpacity>
@@ -542,7 +615,7 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
                         </View>
                     ) : (
                         <View className="py-4">
-                            <Text className="text-slate-400 text-xs font-bold tracking-[6px] text-center mb-1">{dictionary.lessonCode || "DERS KODU"}</Text>
+                            <Text className="text-slate-400 text-xs font-bold tracking-[6px] text-center mb-1">DERS KODU</Text>
                             <Text className="text-5xl font-black text-slate-800 tracking-widest">{generatedData}</Text>
                         </View>
                     )}

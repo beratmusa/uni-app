@@ -64,6 +64,8 @@ const translations = {
     ok:"Tamam",
     student:"Öğrenci",
     lessonCode:"DERS KODU",
+    warning:"Uyarı: Bu ders blok olarak işlendiği için saatlik sisteme çevrilemez.",
+    hour:"Saat",
     idCard: {
     title: "Dijital Kimlik",
     uniName: "KASTAMONU ÜNİVERSİTESİ",
@@ -269,6 +271,8 @@ const translations = {
     ok:"Ok",
     student:"Student",
     lessonCode:"LESSON CODE",
+    warning:"Warning: This course is processed as a block and cannot be converted to an hourly system.",
+    hour:"Hour",
     idCard: {
     title: "Digital ID",
     uniName: "KASTAMONU UNIVERSITY",
