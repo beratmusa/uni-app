@@ -1,3 +1,5 @@
+// QRScannerScreen.tsx dosyasının tamamı veya handleBarCodeScanned güncellemesi:
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { CameraView, Camera } from "expo-camera";
@@ -37,7 +39,6 @@ export const QRScannerScreen = () => {
     onCancel: undefined
   });
 
-
   const t = dictionary.qr || {
     overlay: "Karekodu okutunuz",
     permissionRequest: "Kamera izni gerekiyor",
@@ -47,7 +48,8 @@ export const QRScannerScreen = () => {
     sessionExpired: "Oturum süreniz dolmuş.",
     serverError: "Sunucu hatası.",
     successMessage: "Yoklamaya katıldınız!",
-    invalidCode: "Geçersiz kod.",
+    invalidCode: "Geçersiz veya hatalı karekod.",
+    expiredCode: "Bu karekodun süresi dolmuş.",
     ok: "Tamam",
     retry: "Tekrar Dene",
     exit: "Çık"
@@ -63,7 +65,6 @@ export const QRScannerScreen = () => {
 
   const handleClose = () => {
     setAlertConfig(prev => ({ ...prev, visible: false }));
-    
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
@@ -79,7 +80,6 @@ export const QRScannerScreen = () => {
     }, 1000);
   };
 
-  // Alert gösterme yardımcısı
   const showAlert = (type: 'success' | 'error', title: string, message: string, isRetryable: boolean = false) => {
     setAlertConfig({
       visible: true,
@@ -93,32 +93,67 @@ export const QRScannerScreen = () => {
     });
   };
 
+  // --- QR OKUMA VE DOĞRULAMA MANTIĞI ---
   const handleBarCodeScanned = async ({ type, data }: any) => {
     if (isProcessing.current || scanned) return; 
     isProcessing.current = true;
     setScanned(true);
 
     if (!token) {
-        showAlert('error', t.errorTitle || "Hata", t.sessionExpired || "Oturum doldu");
+        showAlert('error', t.errorTitle, t.sessionExpired);
         return;
     }
 
     try {
-        console.log("QR Okundu:", data);
-        const response = await fetch('https://mobil.kastamonu.edu.tr/api/Yoklama/QrKatil', {
+        // 1. QR Verisini JSON'a çevir
+        let qrData;
+        try {
+            qrData = JSON.parse(data);
+        } catch (e) {
+            console.error("JSON Parse Hatası:", e);
+            showAlert('error', t.errorTitle, t.invalidCode, true);
+            return;
+        }
+
+        // 2. Süre Kontrolü (Client-Side)
+        if (qrData.expirationDate) {
+            const expirationTime = new Date(qrData.expirationDate).getTime();
+            const now = new Date().getTime();
+
+            if (now > expirationTime) {
+                showAlert('error', t.errorTitle, t.expiredCode || "Kodun süresi dolmuş.", true);
+                return;
+            }
+        }
+
+        // 3. API İsteği (Sunucuya Gönder)
+        const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ qrData: data })
+            body: JSON.stringify({
+                serviceName: "SaveStudentAttendancy", // Öğrenci Yoklama Servisi
+                serviceCriteria: {
+                    scheduleId: qrData.scheduleId,
+                    scheduleOrder: qrData.scheduleorder, // Küçük harf dikkat (QR'da öyle tanımlamıştık)
+                    isBlock: qrData.isblock,
+                    qrTimestamp: qrData.timestamp // Güvenlik için oluşturulma zamanını da gönderebiliriz
+                }
+            })
         });
 
-        if (response.ok) {
-            showAlert('success', t.successTitle || "Başarılı", t.successMessage || "İşlem Tamam");
+        const json = await response.json();
+
+        // 4. Yanıtı İşle
+        if (json.Data && json.Data.IsSuccessful) {
+            showAlert('success', t.successTitle, json.Data.Message || t.successMessage);
         } else {
-            showAlert('error', t.errorTitle || "Hata", t.invalidCode || "Geçersiz Kod", true);
+            const errorMsg = json.Data?.ExceptionMessage || json.Data?.Message || t.invalidCode;
+            showAlert('error', t.errorTitle, errorMsg, true);
         }
 
     } catch (error) {
-        showAlert('error', t.errorTitle || "Hata", t.serverError || "Sunucu Hatası");
+        console.error("QR Process Hatası:", error);
+        showAlert('error', t.errorTitle, t.serverError, true);
     }
   };
 
@@ -129,7 +164,7 @@ export const QRScannerScreen = () => {
     <View style={styles.container}>
       <CameraView
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-        barcodeScannerSettings={{ barcodeTypes: ["qr", "pdf417"] }}
+        barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
         style={StyleSheet.absoluteFillObject}
       />
       

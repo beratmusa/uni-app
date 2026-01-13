@@ -128,7 +128,8 @@ const translations = {
     invalidCode: "❌ QR Kod geçersiz veya süresi dolmuş.",
     ok: "Tamam",
     retry: "Tekrar Dene",
-    exit: "Çık"
+    exit: "Çık",
+    expiredCode: "Bu karekodun süresi dolmuş."
   },
   courseSchedule: {
     title: "Ders Programı",
@@ -175,6 +176,25 @@ const translations = {
     noStudent: "Öğrenci bulunamadı.",
     search: "ARA"
   },
+  digitalId: {
+  headerTitle: "Dijital Kimlik",
+  loadingUser: "Kullanıcı bilgileri alınıyor...",
+  searching: "Kimlik kayıtları aranıyor...",
+  creating: "Kart detayları oluşturuluyor...",
+  emailError: "E-posta adresi bulunamadı.",
+  fetchErrorTitle: "Hata",
+  fetchErrorMessage: "Kimlik bilgileri yüklenirken bir sorun oluştu.",
+  notFoundTitle: "Kayıt Bulunamadı",
+  notFoundDesc: "Bu e-posta adresine bağlı aktif bir kimlik kartı kaydı bulunamadı.",
+  uniName: "KASTAMONU ÜNİVERSİTESİ",
+  idSuffix: "KİMLİĞİ", // Örn: ÖĞRENCİ KİMLİĞİ
+  studentIdLabel: "Öğrenci Kimliği",
+  staffIdLabel: "Personel Kimliği",
+  studentNo: "Öğrenci No",
+  staffNo: "Sicil No",
+  qrTitle: "TURNİKE & YEMEKHANE QR KODU",
+  totalCards: "Toplam {0} adet kimlik kartı bulundu."
+},
   attendanceTitle: "Yoklama",
   courseHours: "Ders Saatleri",
   block: "Blok",
@@ -335,7 +355,8 @@ const translations = {
     invalidCode: "❌ Invalid or expired QR Code.",
     ok: "OK",
     retry: "Retry",
-    exit: "Exit"
+    exit: "Exit",
+    expiredCode: "This QR code has expired."
   },
   courseSchedule: {
     title: "Course Schedule",
@@ -382,6 +403,25 @@ const translations = {
     noStudent: "No student found.",
     search: "SEARCH"
   },
+  digitalId: {
+  headerTitle: "Digital ID",
+  loadingUser: "Fetching user info...",
+  searching: "Searching for records...",
+  creating: "Generating card details...",
+  emailError: "Email address not found.",
+  fetchErrorTitle: "Error",
+  fetchErrorMessage: "An error occurred while loading ID details.",
+  notFoundTitle: "No Record Found",
+  notFoundDesc: "No active ID card record found linked to this email.",
+  uniName: "KASTAMONU UNIVERSITY",
+  idSuffix: "ID CARD",
+  studentIdLabel: "Student ID",
+  staffIdLabel: "Staff ID",
+  studentNo: "Student No",
+  staffNo: "Registration No",
+  qrTitle: "TURNSTILE & CAFETERIA QR CODE",
+  totalCards: "Total {0} ID cards found."
+},
   attendanceTitle: "Attendance",
   courseHours: "Course Hours",
   block: "Block",

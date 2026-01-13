@@ -118,6 +118,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
     navigation.navigate('QRScanner');
   };
 
+
   const handleCodeSubmit = async (code: string) => {
     if (!token) {
       showAlert('error', t.errorTitle, t.sessionExpired);
@@ -125,32 +126,35 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
     }
 
     try {
-      console.log("Yoklama gönderiliyor...", code);
-
-      const response = await fetch('https://mobil.kastamonu.edu.tr/api/Yoklama/Katil', {
+      // API İsteği: Öğrencinin girdiği kodu doğrula
+      const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          attendanceCode: code
+          serviceName: "SaveStudentAttendancy", // Öğrenci Yoklama Servisi (Varsayılan İsim)
+          serviceCriteria: {
+            ConfirmationCode: code // Öğrencinin girdiği kod
+          }
         })
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        
+      const json = await response.json();
+
+      // UBYS Standart Yanıt Kontrolü
+      if (json.Data && json.Data.IsSuccessful) {
         setCodeModalVisible(false);
-        
         showAlert(
             'success', 
             t.successTitle, 
-            result.message || "Yoklamaya katıldınız!"
+            json.Data.Message || t.successMessage || "Yoklamaya başarıyla katıldınız!"
         );
-
       } else {
-        showAlert('error', t.errorTitle, t.invalidCode);
+        // Hata mesajı varsa göster (Örn: "Kod hatalı" veya "Süre doldu")
+        const errorMsg = json.Data?.ExceptionMessage || json.Data?.Message || t.invalidCode;
+        showAlert('error', t.errorTitle, errorMsg);
       }
 
     } catch (error) {
@@ -279,7 +283,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                 {/* --- KİMLİK KARTI BUTONU --- */}
                 {token && (
                   <TouchableOpacity 
-                    onPress={() => navigation.navigate('StudentID')}
+                    onPress={() => navigation.navigate('DigitalID')}
                     className="flex-row items-center p-4 rounded-xl mb-2 active:bg-slate-50"
                   >
                     <View className="w-10 h-10 rounded-full bg-red-50 items-center justify-center mr-3">
