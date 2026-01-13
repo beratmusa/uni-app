@@ -11,12 +11,15 @@ import { AuthProvider } from './context/AuthContext';
 import { LoginScreen } from './screens/LoginScreen';
 import { QRScannerScreen } from './screens/QRScannerScreen';
 import { CourseListScreen } from './screens/CourseListScreen';
-import { StudentIDScreen } from './screens/StudentIDScreen';
+import { DigitalIDScreen} from './screens/DigitalIDScreen';
 import { useDailyNotification } from './hooks/useDailyNotification';
 import { CourseScheduleScreen } from './screens/CourseScheduleScreen';
 import { AbsenteeismScreen } from './screens/AbsenteeismScreen';
 import { InstructorAttendanceScreen } from './screens/InstructorAttendanceScreen';
 import { AttendanceManagerScreen } from './screens/AttendanceManagerScreen';
+import { SplashScreen } from './screens/SplashScreen';
+import { useAuth } from './context/AuthContext';
+import React, { useEffect, useState } from 'react';
 
 const Stack = createNativeStackNavigator();
 // Bu ayar katı modu kapatır ve gereksiz uyarıyı engeller
@@ -26,9 +29,25 @@ configureReanimatedLogger({
 });
 
 const AppNavigator = () => {
+  const { token, isLoading } = useAuth();
+  const [isSplashTimeOver, setIsSplashTimeOver] = useState(false);
   const { language } = useLanguage();
+  
   useDailyNotification();
 
+  // 2. MİNİMUM SÜRE SAYACI
+  useEffect(() => {
+    // 2500ms (2.5 saniye) sonra süreyi dolmuş say
+    const timer = setTimeout(() => {
+      setIsSplashTimeOver(true);
+    }, 2500); 
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading || !isSplashTimeOver) {
+    return <SplashScreen />;
+  }
   
 
   return (
@@ -66,8 +85,8 @@ const AppNavigator = () => {
         />
 
         <Stack.Screen 
-          name="StudentID" 
-          component={StudentIDScreen} 
+          name="DigitalID" 
+          component={DigitalIDScreen} 
           options={{ headerShown: false }} 
         />
 
