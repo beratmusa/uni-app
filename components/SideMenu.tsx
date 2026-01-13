@@ -120,13 +120,21 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
 
   const handleCodeSubmit = async (code: string) => {
-    if (!token) {
+    if (!token || !userInfo) {
       showAlert('error', t.errorTitle, t.sessionExpired);
       return;
     }
 
+    const currentStudentId = userInfo.Id || userInfo.Id; 
+
+    if (!currentStudentId) {
+       showAlert('error', t.errorTitle, "Öğrenci kimliği (ID) bulunamadı.");
+       return;
+    }
+
     try {
-      // API İsteği: Öğrencinin girdiği kodu doğrula
+      console.log("Kod gönderiliyor:", code);
+
       const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
         method: 'POST',
         headers: {
@@ -134,31 +142,34 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          serviceName: "SaveStudentAttendancy", // Öğrenci Yoklama Servisi (Varsayılan İsim)
+          serviceName: "RecordStudentAttendanceWithVerificationCode",
           serviceCriteria: {
-            ConfirmationCode: code // Öğrencinin girdiği kod
+            VerificationCode: code,
+            studentId: currentStudentId,
+            IsAttended: "true"                
           }
         })
       });
 
       const json = await response.json();
 
-      // UBYS Standart Yanıt Kontrolü
       if (json.Data && json.Data.IsSuccessful) {
+        
         setCodeModalVisible(false);
+        
         showAlert(
             'success', 
             t.successTitle, 
             json.Data.Message || t.successMessage || "Yoklamaya başarıyla katıldınız!"
         );
+
       } else {
-        // Hata mesajı varsa göster (Örn: "Kod hatalı" veya "Süre doldu")
         const errorMsg = json.Data?.ExceptionMessage || json.Data?.Message || t.invalidCode;
         showAlert('error', t.errorTitle, errorMsg);
       }
 
     } catch (error) {
-      console.error(error);
+      console.error("Yoklama Hatası:", error);
       showAlert('error', t.errorTitle, t.serverError);
     }
   };
