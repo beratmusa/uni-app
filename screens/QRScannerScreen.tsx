@@ -20,7 +20,7 @@ interface AlertState {
 
 export const QRScannerScreen = () => {
   const { dictionary } = useLanguage();
-  const { token, userInfo } = useAuth();
+  const { token } = useAuth();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
   const isProcessing = useRef(false);
@@ -91,21 +91,43 @@ export const QRScannerScreen = () => {
     });
   };
 
+  // --- ÖĞRENCİ ID'SİNİ ÇEKEN YARDIMCI FONKSİYON (GÜNCELLENDİ) ---
+  const fetchMyStudentId = async (): Promise<number | null> => {
+    try {
+        const response = await fetch('https://mobil.kastamonu.edu.tr/api/Student/GetMyStudentInfo', {
+            method: 'GET', 
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json' 
+            },
+            body: ''
+        });
+
+        if (!response.ok) return null;
+
+        const json = await response.json();
+        
+        const dataList = Array.isArray(json) ? json : (json.Data || []);
+
+        if (Array.isArray(dataList) && dataList.length > 0) {
+            return dataList[0].StudentId;
+        }
+
+        return null;
+    } catch (e) {
+        console.error("Öğrenci bilgisi hatası:", e);
+        return null;
+    }
+  };
+
   // --- QR OKUMA VE DOĞRULAMA MANTIĞI ---
   const handleBarCodeScanned = async ({ type, data }: any) => {
     if (isProcessing.current || scanned) return; 
     isProcessing.current = true;
     setScanned(true);
 
-    // 1. Token ve Kullanıcı ID Kontrolü
-    if (!token || !userInfo) {
+    if (!token) {
         showAlert('error', t.errorTitle, t.sessionExpired);
-        return;
-    }
-
-    const currentStudentId = userInfo.Id || userInfo.Id;
-    if (!currentStudentId) {
-        showAlert('error', t.errorTitle, "Öğrenci kimliği bulunamadı.");
         return;
     }
 
@@ -119,22 +141,37 @@ export const QRScannerScreen = () => {
             return;
         }
 
-        // 3. Süre Kontrolü (Client-Side)
-        if (qrData.expirationDate) {
-            const expirationTime = new Date(qrData.expirationDate).getTime();
-            const now = new Date().getTime();
+        // --- SÜRE KONTROLÜ (5 DAKİKA KURALI) ---
+        if (qrData.timestamp) {
+            const createTime = new Date(qrData.timestamp).getTime(); 
+            const now = new Date().getTime(); 
+            
+            // Farkı dakika cinsinden bul (Milisaniye / 1000 / 60)
+            const diffInMinutes = (now - createTime) / 1000 / 60;
 
-            if (now > expirationTime) {
-                showAlert('error', t.errorTitle, t.expiredCode || "Kodun süresi dolmuş.", true);
+            // Eğer 5 dakikadan (5.0) fazlaysa hata ver
+            if (diffInMinutes > 5) {
+                showAlert('error', t.errorTitle, "QR kodun süresi (5dk) dolmuş. Lütfen hocanızdan yenilemesini isteyin.", true);
                 return;
             }
+        } else {
+             showAlert('error', t.errorTitle, "Geçersiz QR formatı (Zaman damgası yok).", true);
+             return;
+        }
+
+        // 3. ÖĞRENCİ ID'SİNİ SERVİSTEN ÇEK
+        const studentId = await fetchMyStudentId();
+
+        if (!studentId) {
+            showAlert('error', t.errorTitle, "Öğrenci bilgilerinize erişilemedi. Lütfen tekrar giriş yapın.");
+            return;
         }
 
         console.log("Sunucuya giden veri:", {
             scheduleId: qrData.scheduleId,
             IsAttended: true,
             scheduleorder: qrData.scheduleorder,
-            studentId: currentStudentId,
+            studentId: studentId,
             isblock: qrData.isblock
         });
 
@@ -148,7 +185,7 @@ export const QRScannerScreen = () => {
                     scheduleId: qrData.scheduleId,
                     IsAttended: true,
                     scheduleorder: qrData.scheduleorder,
-                    studentId: currentStudentId,
+                    studentId: studentId,
                     isblock: qrData.isblock
                 }
             })
@@ -156,7 +193,6 @@ export const QRScannerScreen = () => {
 
         const json = await response.json();
 
-        // 5. Yanıtı İşle
         if (json.Data && json.Data.IsSuccessful) {
             showAlert('success', t.successTitle, json.Data.Message || t.successMessage);
         } else {
