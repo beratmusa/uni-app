@@ -141,25 +141,27 @@ export const QRScannerScreen = () => {
             return;
         }
 
-        // --- SÜRE KONTROLÜ (5 DAKİKA KURALI) ---
         if (qrData.timestamp) {
             const createTime = new Date(qrData.timestamp).getTime(); 
             const now = new Date().getTime(); 
             
-            // Farkı dakika cinsinden bul (Milisaniye / 1000 / 60)
             const diffInMinutes = (now - createTime) / 1000 / 60;
 
-            // Eğer 5 dakikadan (5.0) fazlaysa hata ver
-            if (diffInMinutes > 5) {
-                showAlert('error', t.errorTitle, "QR kodun süresi (5dk) dolmuş. Lütfen hocanızdan yenilemesini isteyin.", true);
-                return;
+            if (diffInMinutes > 5) { 
+                console.log("Süre aşımı tespit edildi. İstek iptal ediliyor.");
+                
+                showAlert(
+                    'error', 
+                    t.errorTitle, 
+                    "QR kodun süresi (5dk) dolmuş. Lütfen hocanızdan yenilemesini isteyin.", 
+                    true
+                );
+                
+                return; 
             }
-        } else {
-             showAlert('error', t.errorTitle, "Geçersiz QR formatı (Zaman damgası yok).", true);
-             return;
         }
 
-        // 3. ÖĞRENCİ ID'SİNİ SERVİSTEN ÇEK
+
         const studentId = await fetchMyStudentId();
 
         if (!studentId) {
@@ -175,7 +177,6 @@ export const QRScannerScreen = () => {
             isblock: qrData.isblock
         });
 
-        // 4. API İsteği
         const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -193,8 +194,15 @@ export const QRScannerScreen = () => {
 
         const json = await response.json();
 
-        if (json.Data && json.Data.IsSuccessful) {
-            showAlert('success', t.successTitle, json.Data.Message || t.successMessage);
+        const successMessage = json.Data?.Data?.Result;
+        const isSuccessBool = json.Data?.IsSuccessful;
+
+        if (!json.Data?.ExceptionMessage && (successMessage || isSuccessBool === true)) {
+            showAlert(
+                'success', 
+                t.successTitle, 
+                successMessage || json.Data?.Message || t.successMessage
+            );
         } else {
             const errorMsg = json.Data?.ExceptionMessage || json.Data?.Message || t.invalidCode;
             showAlert('error', t.errorTitle, errorMsg, true);
