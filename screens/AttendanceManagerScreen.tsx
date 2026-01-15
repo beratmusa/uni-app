@@ -114,8 +114,10 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
   };
 
   useEffect(() => {
-      fetchStudents();
-  }, []);
+      if (token && params.scheduleId) {
+          fetchStudents();
+      }
+  }, [token, params.scheduleId]);
 
   const fetchStudents = async () => {
     setLoadingStudents(true);
@@ -178,7 +180,7 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
     }
   };
 
-  // --- KOD ÜRETME (GÜNCELLENDİ: SÜRE HESAPLAMA) ---
+  // --- KOD ÜRETME (SÜRE HESAPLAMA) ---
   const handleGenerate = async () => {
     if (!isBlockMode && selectedHours.length === 0) {
         showAlert('warning', dictionary.error || "Uyarı", "Lütfen kod üretmek için bir saat seçiniz.");
@@ -220,46 +222,12 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
             } else if (json.Data.Data && json.Data.Data.Result) {
                 
                 if (activeTab === 'QR') {
-                    // --- QR SÜRE HESAPLAMA ---
-                    let expirationDate = new Date();
-                    
-                    // Varsayılan: Şu an + 15 dk
-                    expirationDate.setMinutes(expirationDate.getMinutes() + 15);
-
-                    // Eğer ders saatleri bilgisi varsa, gerçek bitiş saatini bulmaya çalış
-                    try {
-                        // Seçilen son saati bul (Blok veya Normal)
-                        // Normal modda: selectedHours[0]
-                        // Blok modda: availableHours'un sonuncusu (en son dersin bitişi)
-                        const lastHourKey = isBlockMode && availableHours.length > 0 
-                            ? availableHours[availableHours.length - 1] 
-                            : targetHour;
-
-                        const timeString = params.courseHours?.[lastHourKey]; // Örn: "08:30-09:15"
-
-                        if (timeString && timeString.includes("-")) {
-                            const endTimeStr = timeString.split("-")[1].trim(); // "09:15"
-                            const [endHour, endMinute] = endTimeStr.split(":").map(Number);
-
-                            if (!isNaN(endHour) && !isNaN(endMinute)) {
-                                const lessonEndDate = new Date();
-                                lessonEndDate.setHours(endHour, endMinute, 0, 0);
-                                
-                                // Ders bitişine 15 dakika ekle
-                                lessonEndDate.setMinutes(lessonEndDate.getMinutes() + 15);
-                                expirationDate = lessonEndDate;
-                            }
-                        }
-                    } catch (err) {
-                        console.log("Saat hesaplama hatası, varsayılan kullanılıyor.", err);
-                    }
-
+                    // SADECE timestamp EKLİYORUZ
                     const qrPayload = {
                         scheduleId: params.scheduleId,
                         scheduleorder: parseInt(targetHour),
                         isblock: isBlockMode,
-                        timestamp: new Date().toISOString(), // Oluşturulma zamanı
-                        expirationDate: expirationDate.toISOString() // Geçerlilik bitiş zamanı
+                        timestamp: new Date().toISOString()
                     };
                     setGeneratedData(JSON.stringify(qrPayload));
                 } else {

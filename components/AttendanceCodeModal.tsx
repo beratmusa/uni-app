@@ -57,8 +57,8 @@ export const AttendanceCodeModal = ({ visible, onClose, onSubmit }: AttendanceCo
               value={code}
               onChangeText={setCode}
               className="text-lg font-bold text-slate-900 text-center tracking-widest"
-              keyboardType="number-pad"
-              maxLength={6}
+              keyboardType="default"
+              maxLength={8}
               autoFocus={true} 
             />
           </View>
