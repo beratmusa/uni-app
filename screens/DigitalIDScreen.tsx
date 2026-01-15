@@ -217,22 +217,36 @@ export const DigitalIDScreen = () => {
                 'X-Api-Key': 'Kastamonu-37-XyZ-998877'
             }
           });
-          const resText = await cardRes.text();
-          let cardJson;
-          try {
-              cardJson = JSON.parse(resText);
-          } catch(e) {
-              console.error("JSON Parse Error", e);
-              return { ...profile, cardDetails: undefined };
-          }
           
-          const cardDetails: PerioCardInfo | undefined = (Array.isArray(cardJson) && cardJson.length > 0) 
-            ? cardJson[0] 
-            : undefined;
+          const resText = await cardRes.text();
+          let cardDetails: PerioCardInfo | undefined = undefined;
+
+          // --- GÜVENLİ PARSE İŞLEMİ ---
+          try {
+              if (resText && resText.trim().length > 0) {
+                  const firstChar = resText.trim().charAt(0);
+                  
+                  if (firstChar === '[' || firstChar === '{') {
+                      const cardJson = JSON.parse(resText);
+                      
+                      if (Array.isArray(cardJson) && cardJson.length > 0) {
+                          cardDetails = cardJson[0]; 
+                      } 
+                      else if (!Array.isArray(cardJson) && cardJson.heX_KART_ID) {
+                          cardDetails = cardJson;
+                      }
+                  } else {
+                      console.log(`Sunucudan JSON olmayan yanıt geldi (${profile.uniqNo}):`, resText);
+                  }
+              }
+          } catch(e) {
+              console.warn(`JSON Parse Hatası (${profile.uniqNo}):`, e);
+          }
 
           return { ...profile, cardDetails };
+
         } catch (e) {
-          console.error(`Hata (${profile.uniqNo}):`, e);
+          console.error(`Fetch Hatası (${profile.uniqNo}):`, e);
           return { ...profile, cardDetails: undefined };
         }
       });

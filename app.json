@@ -3,13 +3,6 @@
     "name": "Kastamonu Üniversitesi",
     "slug": "KU-APP",
     "version": "1.0.0",
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "experiments": {
-      "tsconfigPaths": true
-    },
-    "plugins": [],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,18 +11,28 @@
       "resizeMode": "contain",
       "backgroundColor": "#1e3a8a"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.beratmusa.kuapp"
     },
     "android": {
+      "package": "com.beratmusa.kuapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": ["NOTIFICATIONS"]
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1e3a8a",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "2a78561e-4742-4981-84a3-65fb725f66db"

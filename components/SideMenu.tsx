@@ -179,15 +179,24 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
       const json = await response.json();
 
-      if (json.Data && json.Data.IsSuccessful) {
+      const successMessage = json.Data?.Data?.Result;
+      
+      const isSuccessBool = json.Data?.IsSuccessful;
+      
+      const exceptionMessage = json.Data?.ExceptionMessage;
+
+      if (!exceptionMessage && (successMessage || isSuccessBool === true)) {
+        
         setCodeModalVisible(false);
+        
         showAlert(
             'success', 
             t.successTitle, 
-            json.Data.Message || t.successMessage || "Yoklamaya katıldınız!"
+            successMessage || json.Data?.Message || t.successMessage || "Yoklamaya başarıyla katıldınız!"
         );
+
       } else {
-        const errorMsg = json.Data?.ExceptionMessage || json.Data?.Message || t.invalidCode;
+        const errorMsg = exceptionMessage || json.Data?.Message || t.invalidCode;
         showAlert('error', t.errorTitle, errorMsg);
       }
 
@@ -459,36 +468,7 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
                 )}
                 
                 
-                {/*  AKADEMİK TAKVİM */}
-                <View>
-                  <TouchableOpacity onPress={() => setCalendarOpen(!isCalendarOpen)} className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isCalendarOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}>
-                    <View className={`${isCalendarOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}><Calendar size={20} color={isCalendarOpen ? "#2563eb" : "#374151"} /></View>
-                    <Text className={`ml-3 font-semibold text-base ${isCalendarOpen ? "text-blue-700" : "text-gray-700"}`}>{dictionary.academicCalendar}</Text>
-                    {isCalendarOpen ? <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />}
-                  </TouchableOpacity>
-
-                  {/* ALT MENÜLER */}
-                  {isCalendarOpen && (
-                    <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
-                      <SubMenuLink 
-                        title={dictionary.calendarGeneral}
-                        onPress={() => handleOpenPdf(PDF_LINKS.GENEL, dictionary.calendarGeneral)} 
-                      />
-                      <SubMenuLink 
-                        title={dictionary.calendarEn} 
-                        onPress={() => handleOpenPdf(PDF_LINKS.ACADEMİC_Calendar_EN, "Academic Calendar")} 
-                      />
-                      <SubMenuLink 
-                        title={dictionary.calendarMedicine} 
-                        onPress={() => handleOpenPdf(PDF_LINKS.TIP, dictionary.calendarMedicine)} 
-                      />
-                      <SubMenuLink 
-                        title={dictionary.calendarVet}
-                        onPress={() => handleOpenPdf(PDF_LINKS.VETERINER, dictionary.calendarVet)} 
-                      />
-                    </View>
-                  )}
-                </View>
+               
 
                 {/*  YEMEK LİSTESİ */}
                 <TouchableOpacity onPress={handleDiningClick} className="flex-row items-center p-4 rounded-xl active:bg-blue-50 border border-transparent active:border-blue-100">
@@ -562,3 +542,34 @@ const SubMenuLink = ({ title, onPress }: { title: string, onPress: () => void })
     <ChevronRight size={12} color="#9ca3af" style={{ marginLeft: 'auto', opacity: 0.5 }} />
   </TouchableOpacity>
 );
+
+ {/*  AKADEMİK TAKVİM */}
+                // <View>
+                //   <TouchableOpacity onPress={() => setCalendarOpen(!isCalendarOpen)} className={`flex-row items-center p-4 rounded-xl border border-transparent transition-all ${isCalendarOpen ? "bg-blue-50 border-blue-100" : "active:bg-gray-50"}`}>
+                //     <View className={`${isCalendarOpen ? "opacity-100 text-blue-600" : "opacity-60 text-gray-700"}`}><Calendar size={20} color={isCalendarOpen ? "#2563eb" : "#374151"} /></View>
+                //     <Text className={`ml-3 font-semibold text-base ${isCalendarOpen ? "text-blue-700" : "text-gray-700"}`}>{dictionary.academicCalendar}</Text>
+                //     {isCalendarOpen ? <ChevronDown size={16} color="#2563eb" style={{ marginLeft: 'auto' }} /> : <ChevronRight size={16} color="#9ca3af" style={{ marginLeft: 'auto' }} />}
+                //   </TouchableOpacity>
+
+                //   {/* ALT MENÜLER */}
+                //   {isCalendarOpen && (
+                //     <View className="ml-4 pl-4 border-l-2 border-blue-100 mt-1 gap-1">
+                //       <SubMenuLink 
+                //         title={dictionary.calendarGeneral}
+                //         onPress={() => handleOpenPdf(PDF_LINKS.GENEL, dictionary.calendarGeneral)} 
+                //       />
+                //       <SubMenuLink 
+                //         title={dictionary.calendarEn} 
+                //         onPress={() => handleOpenPdf(PDF_LINKS.ACADEMİC_Calendar_EN, "Academic Calendar")} 
+                //       />
+                //       <SubMenuLink 
+                //         title={dictionary.calendarMedicine} 
+                //         onPress={() => handleOpenPdf(PDF_LINKS.TIP, dictionary.calendarMedicine)} 
+                //       />
+                //       <SubMenuLink 
+                //         title={dictionary.calendarVet}
+                //         onPress={() => handleOpenPdf(PDF_LINKS.VETERINER, dictionary.calendarVet)} 
+                //       />
+                //     </View>
+                //   )}
+                // </View>

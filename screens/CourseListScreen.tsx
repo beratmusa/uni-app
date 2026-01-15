@@ -253,7 +253,7 @@ export const CourseListScreen = () => {
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#2563eb" />
-          <Text className="text-slate-400 text-xs mt-2">Dersler yükleniyor...</Text>
+          <Text className="text-slate-400 text-xs mt-2">{dictionary.checkingLessons}</Text>
         </View>
       ) : (
         <FlatList
@@ -264,7 +264,7 @@ export const CourseListScreen = () => {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={
             <View className="items-center justify-center mt-20">
-              <Text className="text-slate-400">Ders kaydı bulunamadı.</Text>
+              <Text className="text-slate-400">{dictionary.lessonsLoadError}</Text>
             </View>
           }
         />

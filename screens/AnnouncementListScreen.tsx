@@ -80,7 +80,10 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         id: item.id,
         title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
         date: new Date(item.baslamaZamani).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
-        image: null, 
+        
+        // 1. DÜZELTME: Veri haritalanırken resmi de alıyoruz
+        image: item.haberDuyuruFoto || null, 
+        
         category: item.kategori,
         originalData: item
       }));
@@ -100,14 +103,12 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
     }
   };
 
-  // --- ÇEVİRİ YARDIMCISI ---
   const getCategoryDisplayName = (rawName: string) => {
     if (rawName === "Tümü" || rawName === "All") return language === 'tr' ? "Tümü" : "All";
     if (language === 'tr') return rawName; 
     return TRANSLATIONS[rawName] || rawName; 
   };
 
-  // --- TEMA RENGİ SEÇİCİ ---
   const getTheme = (catName: string) => {
     if (catName === "Tümü") return CATEGORY_THEMES["Tümü"];
     if (CATEGORY_THEMES[catName]) return CATEGORY_THEMES[catName];
@@ -121,7 +122,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
     return CATEGORY_THEMES["Default"];
   };
 
-  // --- FİLTRE SEÇENEKLERİ ---
   const filterOptions = useMemo(() => {
     const uniqueCats = new Set<string>();
     allData.forEach(item => {
@@ -147,17 +147,23 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
 
   const handleItemPress = (item: GenericItem) => {
     const rawItem = item.originalData as HaberItem;
+    
+    // Debug için konsola yazdırıyoruz
+    // console.log("Seçilen Öğenin Resmi:", rawItem.haberDuyuruFoto);
+
     setSelectedItem({
         title: item.title,
         date: item.date,
         content: language === 'tr' ? (rawItem.icerikTR || "") : (rawItem.icerikEN || rawItem.icerikTR || ""),
-        image: null, 
+        
+        // 2. DÜZELTME: Burası null idi, API'den gelen veriyi bağlıyoruz
+        image: rawItem.haberDuyuruFoto, 
+        
         category: getCategoryDisplayName(item.category || "") 
     });
     setModalVisible(true);
   };
 
-  // --- LİSTE ELEMANI ---
   const renderItem = ({ item }: { item: GenericItem }) => {
     const theme = getTheme(item.category || "");
     const displayName = getCategoryDisplayName(item.category || "");
@@ -188,7 +194,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
                     </Text>
                 </View>
 
-                {/* Çevrilmiş İsim */}
                 <View className={`px-2 py-0.5 rounded border border-transparent ${theme.lightBadge}`}>
                     <Text className={`text-[9px] font-bold ${theme.text}`} numberOfLines={1}>
                         {displayName}
@@ -206,7 +211,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
       
-      {/* HEADER */}
       <View className="px-4 py-3 bg-white border-b border-slate-100 flex-row items-center justify-between shadow-sm z-10">
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
@@ -219,7 +223,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         <View className="w-10" /> 
       </View>
 
-      {/* COMBOBOX */}
       <View className="px-4 py-4 z-20">
         <TouchableOpacity 
           onPress={() => setIsDropdownOpen(true)}
@@ -244,7 +247,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* MODAL */}
       <Modal visible={isDropdownOpen} transparent animationType="fade">
         <TouchableOpacity 
           className="flex-1 bg-black/50 justify-center px-6"
@@ -288,7 +290,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </Modal>
 
-      {/* LİSTE */}
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#ea580c" />
