@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Calendar, Filter, ChevronDown, Check, Megaphone } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Filter, ChevronDown, Check, Megaphone, X } from 'lucide-react-native';
 import { useLanguage } from '../context/LanguageContext';
 import { DetailModal, DetailData } from '../components/DetailModal';
 import { GenericItem } from '../components/AllItemsPage';
@@ -52,6 +52,9 @@ const TRANSLATIONS: Record<string, string> = {
   "Tümü": "All"
 };
 
+const MONTHS_TR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+const MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
 export const AnnouncementListScreen = ({ navigation }: any) => {
   const { language, dictionary } = useLanguage();
   
@@ -59,10 +62,14 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
   const [allData, setAllData] = useState<GenericItem[]>([]); 
   const [filteredData, setFilteredData] = useState<GenericItem[]>([]);
   
-  const ALL_LABEL = language === 'tr' ? "Tümü" : "All";
+  // --- FİLTRE STATELERİ ---
   const [selectedCategory, setSelectedCategory] = useState<string>("Tümü");
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
 
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // --- MODAL STATELERİ ---
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
+  
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<DetailData | null>(null);
 
@@ -81,7 +88,6 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         title: language === 'tr' ? item.baslikTR : (item.baslikEN || item.baslikTR),
         date: new Date(item.baslamaZamani).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
         
-        // 1. DÜZELTME: Veri haritalanırken resmi de alıyoruz
         image: item.haberDuyuruFoto || null, 
         
         category: item.kategori,
@@ -89,12 +95,7 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
       }));
 
       setAllData(formattedData);
-      
-      if (selectedCategory === "Tümü") {
-        setFilteredData(formattedData);
-      } else {
-        setFilteredData(formattedData.filter(item => item.category === selectedCategory));
-      }
+      setFilteredData(formattedData); 
 
     } catch (error) {
       console.error("Duyuru verisi alınamadı:", error);
@@ -122,6 +123,39 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
     return CATEGORY_THEMES["Default"];
   };
 
+  // --- ANA FİLTRELEME FONKSİYONU ---
+  const applyFilters = (category: string, month: number | null) => {
+    let result = allData;
+
+    // 1. Kategori Filtresi
+    if (category !== "Tümü") {
+      result = result.filter(item => item.category === category);
+    }
+
+    // 2. Ay Filtresi
+    if (month !== null) {
+      result = result.filter(item => {
+        const rawDate = (item.originalData as HaberItem).baslamaZamani;
+        const itemMonth = new Date(rawDate).getMonth(); 
+        return itemMonth === month;
+      });
+    }
+
+    setFilteredData(result);
+  };
+
+  const handleCategorySelect = (catValue: string) => {
+    setSelectedCategory(catValue);
+    setIsCategoryDropdownOpen(false);
+    applyFilters(catValue, selectedMonth); 
+  };
+
+  const handleMonthSelect = (monthIndex: number | null) => {
+    setSelectedMonth(monthIndex);
+    setIsMonthDropdownOpen(false);
+    applyFilters(selectedCategory, monthIndex); 
+  };
+
   const filterOptions = useMemo(() => {
     const uniqueCats = new Set<string>();
     allData.forEach(item => {
@@ -130,38 +164,55 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
 
     const options = ["Tümü"]; 
     uniqueCats.forEach(cat => options.push(cat));
-    
     return options;
   }, [allData]);
 
-  const handleFilterSelect = (catValue: string) => {
-    setSelectedCategory(catValue);
-    setIsDropdownOpen(false);
+  const monthOptions = language === 'tr' ? MONTHS_TR : MONTHS_EN;
 
-    if (catValue === "Tümü") {
-      setFilteredData(allData);
-    } else {
-      setFilteredData(allData.filter(item => item.category === catValue));
-    }
-  };
-
-  const handleItemPress = (item: GenericItem) => {
+  const handleItemPress = async (item: GenericItem) => {
     const rawItem = item.originalData as HaberItem;
     
-    // Debug için konsola yazdırıyoruz
-    // console.log("Seçilen Öğenin Resmi:", rawItem.haberDuyuruFoto);
-
-    setSelectedItem({
+    const initialData: DetailData = {
         title: item.title,
         date: item.date,
         content: language === 'tr' ? (rawItem.icerikTR || "") : (rawItem.icerikEN || rawItem.icerikTR || ""),
-        
-        // 2. DÜZELTME: Burası null idi, API'den gelen veriyi bağlıyoruz
         image: rawItem.haberDuyuruFoto, 
-        
-        category: getCategoryDisplayName(item.category || "") 
-    });
+        category: getCategoryDisplayName(item.category || ""),
+        gallery: []
+    };
+
+    setSelectedItem(initialData);
     setModalVisible(true);
+
+    try {
+
+        const response = await fetch(`https://testapi.kastamonu.edu.tr/api/haberduyuru/${item.id}`);
+        const json = await response.json();
+        const detailData = json.data;
+
+        if (detailData) {
+
+            
+            const freshImage = (detailData.haberFotolar && detailData.haberFotolar.length > 0) 
+                ? detailData.haberFotolar[0] 
+                : initialData.image;
+
+            setSelectedItem({
+                ...initialData,
+                title: language === 'tr' 
+                    ? (detailData.baslikTR || initialData.title) 
+                    : (detailData.baslikEN || initialData.title),
+                content: language === 'tr' 
+                    ? (detailData.icerikTR || initialData.content) 
+                    : (detailData.icerikEN || initialData.content),
+                
+                image: freshImage, 
+                gallery: detailData.haberFotolar || []
+            });
+        }
+    } catch (error) {
+        console.error("Duyuru detay hatası:", error);
+    }
   };
 
   const renderItem = ({ item }: { item: GenericItem }) => {
@@ -206,11 +257,15 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
   };
 
   const activeTheme = getTheme(selectedCategory);
-  const selectedLabel = getCategoryDisplayName(selectedCategory);
+  const selectedCategoryLabel = getCategoryDisplayName(selectedCategory);
+  const selectedMonthLabel = selectedMonth !== null 
+    ? monthOptions[selectedMonth] 
+    : (language === 'tr' ? 'Tüm Aylar' : 'All Months');
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={['top']}>
       
+      {/* HEADER */}
       <View className="px-4 py-3 bg-white border-b border-slate-100 flex-row items-center justify-between shadow-sm z-10">
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
@@ -223,42 +278,75 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         <View className="w-10" /> 
       </View>
 
-      <View className="px-4 py-4 z-20">
+      {/* FİLTRE ALANI (YAN YANA İKİ DROPDOWN) */}
+      <View className="px-4 py-4 z-20 flex-row gap-3">
+        
+        {/* 1. KATEGORİ SEÇİMİ */}
         <TouchableOpacity 
-          onPress={() => setIsDropdownOpen(true)}
+          onPress={() => setIsCategoryDropdownOpen(true)}
           activeOpacity={0.9}
-          className={`flex-row items-center justify-between bg-white border p-4 rounded-xl shadow-sm ${activeTheme.border.replace('border-', 'border-opacity-30 border-')}`}
+          className={`flex-1 flex-row items-center justify-between bg-white border p-3 rounded-xl shadow-sm ${activeTheme.border.replace('border-', 'border-opacity-30 border-')}`}
           style={{ borderColor: activeTheme.iconHex + '40' }}
         >
-          <View className="flex-row items-center">
-            <View className={`p-2 rounded-lg mr-3 ${activeTheme.lightBadge}`}>
-              <Filter size={18} color={activeTheme.iconHex} />
+          <View className="flex-row items-center flex-1 mr-2">
+            <View className={`p-1.5 rounded-lg mr-2 ${activeTheme.lightBadge}`}>
+              <Filter size={16} color={activeTheme.iconHex} />
             </View>
-            <View>
-              <Text className="text-xs text-slate-400 font-medium">
-                {language === 'tr' ? 'Kategori Seçiniz' : 'Select Category'}
+            <View className="flex-1">
+              <Text className="text-[10px] text-slate-400 font-medium" numberOfLines={1}>
+                {language === 'tr' ? 'Kategori' : 'Category'}
               </Text>
-              <Text className="text-slate-800 font-bold text-base">
-                {selectedLabel}
+              <Text className="text-slate-800 font-bold text-sm" numberOfLines={1}>
+                {selectedCategoryLabel}
               </Text>
             </View>
           </View>
-          <ChevronDown size={20} color="#64748b" />
+          <ChevronDown size={16} color="#64748b" />
         </TouchableOpacity>
+
+        {/* 2. AY SEÇİMİ */}
+        <TouchableOpacity 
+          onPress={() => setIsMonthDropdownOpen(true)}
+          activeOpacity={0.9}
+          className="flex-1 flex-row items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm"
+        >
+          <View className="flex-row items-center flex-1 mr-2">
+            <View className="p-1.5 rounded-lg mr-2 bg-orange-50">
+              <Calendar size={16} color="#ea580c" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[10px] text-slate-400 font-medium" numberOfLines={1}>
+                {language === 'tr' ? 'Tarih' : 'Date'}
+              </Text>
+              <Text className={`text-sm font-bold ${selectedMonth !== null ? 'text-orange-600' : 'text-slate-800'}`} numberOfLines={1}>
+                {selectedMonthLabel}
+              </Text>
+            </View>
+          </View>
+          {selectedMonth !== null ? (
+             <TouchableOpacity onPress={() => handleMonthSelect(null)}>
+                 <X size={16} color="#94a3b8" />
+             </TouchableOpacity>
+          ) : (
+             <ChevronDown size={16} color="#64748b" />
+          )}
+        </TouchableOpacity>
+
       </View>
 
-      <Modal visible={isDropdownOpen} transparent animationType="fade">
+      {/* --- KATEGORİ MODALI --- */}
+      <Modal visible={isCategoryDropdownOpen} transparent animationType="fade">
         <TouchableOpacity 
           className="flex-1 bg-black/50 justify-center px-6"
           activeOpacity={1}
-          onPress={() => setIsDropdownOpen(false)}
+          onPress={() => setIsCategoryDropdownOpen(false)}
         >
           <View className="bg-white rounded-3xl p-4 shadow-2xl max-h-[60%]">
             <View className="flex-row justify-between items-center mb-4 pb-2 border-b border-slate-100">
                <Text className="text-lg font-bold text-slate-800">
                  {language === 'tr' ? 'Kategoriler' : 'Categories'}
                </Text>
-               <TouchableOpacity onPress={() => setIsDropdownOpen(false)}>
+               <TouchableOpacity onPress={() => setIsCategoryDropdownOpen(false)}>
                  <Text className="font-bold text-slate-500">{language === 'tr' ? 'Kapat' : 'Close'}</Text>
                </TouchableOpacity>
             </View>
@@ -273,7 +361,7 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
 
                 return (
                   <TouchableOpacity 
-                    onPress={() => handleFilterSelect(item)}
+                    onPress={() => handleCategorySelect(item)}
                     className={`flex-row items-center justify-between p-4 rounded-xl mb-2 ${isSelected ? itemTheme.lightBadge : 'active:bg-slate-50'}`}
                   >
                     <Text className={`font-semibold text-base ${isSelected ? itemTheme.text : 'text-slate-700'}`}>
@@ -290,6 +378,59 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </Modal>
 
+      {/* --- AY SEÇİM MODALI --- */}
+      <Modal visible={isMonthDropdownOpen} transparent animationType="fade">
+        <TouchableOpacity 
+          className="flex-1 bg-black/50 justify-center px-6"
+          activeOpacity={1}
+          onPress={() => setIsMonthDropdownOpen(false)}
+        >
+          <View className="bg-white rounded-3xl p-4 shadow-2xl max-h-[60%]">
+            <View className="flex-row justify-between items-center mb-4 pb-2 border-b border-slate-100">
+               <Text className="text-lg font-bold text-slate-800">
+                 {language === 'tr' ? 'Ay Seçiniz' : 'Select Month'}
+               </Text>
+               <TouchableOpacity onPress={() => setIsMonthDropdownOpen(false)}>
+                 <Text className="font-bold text-slate-500">{language === 'tr' ? 'Kapat' : 'Close'}</Text>
+               </TouchableOpacity>
+            </View>
+            
+            <FlatList 
+              data={monthOptions}
+              keyExtractor={(item, index) => index.toString()}
+              ListHeaderComponent={
+                <TouchableOpacity 
+                    onPress={() => handleMonthSelect(null)}
+                    className={`flex-row items-center justify-between p-4 rounded-xl mb-2 ${selectedMonth === null ? 'bg-orange-50' : 'active:bg-slate-50'}`}
+                  >
+                    <Text className={`font-semibold text-base ${selectedMonth === null ? 'text-orange-600' : 'text-slate-700'}`}>
+                      {language === 'tr' ? 'Tüm Aylar' : 'All Months'}
+                    </Text>
+                    {selectedMonth === null && <Check size={18} color="#ea580c" />}
+                </TouchableOpacity>
+              }
+              renderItem={({ item, index }) => {
+                const isSelected = selectedMonth === index;
+                return (
+                  <TouchableOpacity 
+                    onPress={() => handleMonthSelect(index)}
+                    className={`flex-row items-center justify-between p-4 rounded-xl mb-2 ${isSelected ? 'bg-orange-50' : 'active:bg-slate-50'}`}
+                  >
+                    <Text className={`font-semibold text-base ${isSelected ? 'text-orange-600' : 'text-slate-700'}`}>
+                      {item}
+                    </Text>
+                    {isSelected && (
+                      <Check size={18} color="#ea580c" />
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* LİSTE */}
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#ea580c" />
@@ -303,7 +444,7 @@ export const AnnouncementListScreen = ({ navigation }: any) => {
           ListEmptyComponent={
             <View className="items-center justify-center mt-10 p-6">
               <Text className="text-slate-400 text-center text-base">
-                {language === 'tr' ? 'İçerik bulunamadı.' : 'No content found.'}
+                {language === 'tr' ? 'Seçilen kriterlere uygun içerik bulunamadı.' : 'No content found for selected criteria.'}
               </Text>
             </View>
           }

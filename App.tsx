@@ -19,6 +19,7 @@ import { InstructorAttendanceScreen } from './screens/InstructorAttendanceScreen
 import { AttendanceManagerScreen } from './screens/AttendanceManagerScreen';
 import { SplashScreen } from './screens/SplashScreen';
 import React, { useEffect, useState } from 'react';
+import { registerDailyTask } from './services/DailyGradeTask';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +34,10 @@ const AppNavigator = () => {
   const { language } = useLanguage();
   
   const { expoPushToken, notification } = usePushNotifications();
+
+  useEffect(() => {
+    registerDailyTask();
+  }, []);
 
   // 2. Token Gelince Loglayalım
   useEffect(() => {
