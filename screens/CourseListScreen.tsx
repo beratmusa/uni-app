@@ -5,55 +5,10 @@ import { ArrowLeft, GraduationCap, User as UserIcon } from 'lucide-react-native'
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-interface LessonRaw {
-  LessonName: string;
-  LessonCode: string;
-  LessonCredit: number;
-  TeacherName: string;
-  TeacherTitle: string;
-  ClassId: number;
-}
-
-interface ExamRaw {
-  ExamResult: number;
-  ExcuseExamResult: number;
-  ClassId: number;
-  SharedExamName: string;
-  ExamStartDate: string | null;
-}
-
-interface DisplayCourse {
-  id: number;
-  code: string;
-  name: string;
-  teacher: string;
-  vize: string;
-  final: string;
-  butunleme: string;
-  average: string;
-  letterGrade: string;
-}
-
-// --- HARF NOTU HESAPLAMA ---
-const calculateLetterGrade = (average: number): string => {
-  if (average >= 90) return "AA";
-  if (average >= 85) return "BA";
-  if (average >= 75) return "BB";
-  if (average >= 65) return "CB";
-  if (average >= 60) return "CC";
-  if (average >= 55) return "DC";
-  if (average >= 50) return "DD";
-  if (average >= 40) return "FD";
-  return "FF";
-};
-
-// --- NOT FORMATLAMA ---
-const formatGrade = (grade: number | null | undefined): string => {
-  if (grade === null || grade === undefined) return "-";
-
-  return grade.toString();
-};
+// Servisten gelen tipi ve fonksiyonu alıyoruz
+import { fetchGradesFromApi, Course } from '../services/gradeApi';
 
 export const CourseListScreen = () => {
   const { dictionary } = useLanguage();
@@ -61,7 +16,8 @@ export const CourseListScreen = () => {
   const { token } = useAuth();
   
   const [loading, setLoading] = useState(true);
-  const [courses, setCourses] = useState<DisplayCourse[]>([]);
+  // State tipini servisten gelen 'Course' olarak ayarladık
+  const [courses, setCourses] = useState<Course[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchCoursesAndGrades = async () => {
@@ -71,104 +27,22 @@ export const CourseListScreen = () => {
     }
 
     try {
-      const cleanToken = token.trim();
+        // 1. Ortak servisi çağır (Tüm hesaplamalar burada yapılıp gelir)
+        const data = await fetchGradesFromApi(token);
 
-      const lessonResponse = await fetch('https://mobil.kastamonu.edu.tr/api/Student/GetStudentLessonInfo', {
-        method: 'POST', 
-        headers: { 'Authorization': `Bearer ${cleanToken}` },
-        body: '' 
-      });
+        // 2. State'i güncelle
+        setCourses(data);
 
-      if (!lessonResponse.ok) throw new Error(`Ders listesi hatası: ${lessonResponse.status}`);
-      
-      const lessonJson = await lessonResponse.json();
-      const lessonList: LessonRaw[] = lessonJson.Data || [];
-
-      if (lessonList.length === 0) {
-        setCourses([]);
-        setLoading(false);
-        return;
-      }
-
-      const combinedData = await Promise.all(
-        lessonList.map(async (lesson) => {
-          try {
-            const examResponse = await fetch('https://mobil.kastamonu.edu.tr/api/Student/GetStudentExamInfo/', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${cleanToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ "classId": lesson.ClassId })
-            });
-
-            let vize = "-";
-            let final = "-";
-            let butunleme = "-";
-
-            if (examResponse.ok) {
-              const examJson = await examResponse.json();
-              const exams: ExamRaw[] = examJson.Data || [];
-
-              exams.forEach(exam => {
-                const result = exam.ExamResult !== null ? exam.ExamResult.toString() : "-";
-                const name = exam.SharedExamName ? exam.SharedExamName.toLowerCase() : "";
-                
-                if (name.includes("vize") || name.includes("ara")) vize = result;
-                else if (name.includes("final") || name.includes("genel")) final = result;
-                else if (name.includes("bütünleme")) butunleme = result;
-              });
-            }
-
-            let avgStr = "-";
-            let letter = "-";
-
-            const finalGradeStr = (butunleme !== "-") ? butunleme : final;
-
-            if (vize !== "-" && finalGradeStr !== "-") {
-                const v = parseFloat(vize);
-                const f = parseFloat(finalGradeStr);
-                
-                if (!isNaN(v) && !isNaN(f)) {
-                    const averageVal = (v * 0.4 + f * 0.6);
-                    avgStr = averageVal.toFixed(0);
-                    letter = calculateLetterGrade(averageVal);
-                }
-            }
-
-            return {
-              id: lesson.ClassId,
-              code: lesson.LessonCode,
-              name: lesson.LessonName,
-              teacher: `${lesson.TeacherTitle} ${lesson.TeacherName}`,
-              vize,
-              final,
-              butunleme,
-              average: avgStr,
-              letterGrade: letter
-            };
-
-          } catch (e) {
-            console.error(`Ders detayı hatası (${lesson.LessonCode}):`, e);
-            return {
-              id: lesson.ClassId,
-              code: lesson.LessonCode,
-              name: lesson.LessonName,
-              teacher: `${lesson.TeacherTitle} ${lesson.TeacherName}`,
-              vize: "-", final: "-", butunleme: "-", average: "-", letterGrade: "-"
-            };
-          }
-        })
-      );
-
-      setCourses(combinedData);
+        // 3. ÖNEMLİ: Veriyi arka plan kontrolü için kaydet (Önbellek)
+        await AsyncStorage.setItem('cachedGrades', JSON.stringify(data));
 
     } catch (error: any) {
-      console.error("Veri çekme hatası:", error);
-      Alert.alert("Hata", "Veriler alınırken bir sorun oluştu.");
+        console.error("Veri çekme hatası:", error);
+        // Kullanıcıyı çok sıkmamak için Alert opsiyonel olabilir
+        // Alert.alert("Hata", "Veriler alınırken bir sorun oluştu.");
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+        setLoading(false);
+        setRefreshing(false);
     }
   };
 
@@ -181,7 +55,8 @@ export const CourseListScreen = () => {
     fetchCoursesAndGrades();
   };
 
-  const renderItem = ({ item }: { item: DisplayCourse }) => {
+  const renderItem = ({ item }: { item: Course }) => {
+      // Servisten gelen 'letterGrade' zaten hesaplanmış olduğu için direkt kullanıyoruz
       const isFailed = item.letterGrade === "FF" || item.letterGrade === "FD";
       const hasGrade = item.letterGrade !== "-";
       
@@ -218,7 +93,7 @@ export const CourseListScreen = () => {
               </Text>
             </View>
 
-            {/* FİNAL (Eğer büt varsa üstünü çiz veya bütü göster) */}
+            {/* FİNAL / BÜT */}
             <View className="items-center flex-1 border-r border-slate-200">
               <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">
                   {item.butunleme !== "-" ? "Büt" : (dictionary.final || "Final")}
