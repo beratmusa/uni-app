@@ -6,7 +6,6 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
 
-// API'den dönen veri yapısı
 interface InstructorSchedule {
   WeeklyClassScheduleNo: number;
   DayOfWeek: number;
@@ -73,7 +72,6 @@ export const InstructorAttendanceScreen = () => {
   // --- SAAT KONTROLÜ (15 DK KURALI) ---
   const isLessonActive = (startHour: string, finishHour: string) => {
     const now = new Date(); 
-    //const now = new Date("2026-01-07T13:40:00"); 
 
     const start = new Date(startHour);
     const finish = new Date(finishHour);
@@ -145,7 +143,7 @@ export const InstructorAttendanceScreen = () => {
                     <TouchableOpacity 
                         onPress={() => navigation.navigate('AttendanceManager', { 
                             classId: item.ClassNo, 
-                            scheduleId: item.WeeklyClassScheduleNo, // Düzeltilmiş ID
+                            scheduleId: item.WeeklyClassScheduleNo,
                             courseName: item.CourseName,
                             courseHours: item.CourseHours
                         })}

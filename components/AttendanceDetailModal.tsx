@@ -60,7 +60,7 @@ export const AttendanceDetailModal = ({ course, onClose }: Props) => {
             setLoading(true);
         }
 
-        console.log(`🔍 İSTENEN DERS: ${course.LessonName} (ID: ${course.ClassId})`);
+        // console.log(`🔍 İSTENEN DERS: ${course.LessonName} (ID: ${course.ClassId})`);
         
         const url = `https://mobil.kastamonu.edu.tr/api/Student/GetMyAttendanceHistory?classId=${course.ClassId}&_t=${Date.now()}`;
         
@@ -83,7 +83,7 @@ export const AttendanceDetailModal = ({ course, onClose }: Props) => {
             if (json.Data && Array.isArray(json.Data)) {
 
                 if (json.Data.length > 0) {
-                    console.log(`📦 API'DEN GELEN İLK KAYIT ID: ${json.Data[0].ClassId}`);
+                    // console.log(`📦 API'DEN GELEN İLK KAYIT ID: ${json.Data[0].ClassId}`);
                 }
 
 
@@ -92,7 +92,7 @@ export const AttendanceDetailModal = ({ course, onClose }: Props) => {
                     return isMatch;
                 });
 
-                console.log(`🛡️ FİLTRE SONUCU: API ${json.Data.length} veri gönderdi, ${correctData.length} tanesi bu derse ait.`);
+                // console.log(`🛡️ FİLTRE SONUCU: API ${json.Data.length} veri gönderdi, ${correctData.length} tanesi bu derse ait.`);
 
                 setData(correctData);
             } else {
@@ -101,7 +101,6 @@ export const AttendanceDetailModal = ({ course, onClose }: Props) => {
         }
       } catch (error) {
         if (isMounted) {
-            console.error("Hata:", error);
             setData([]);
         }
       } finally {

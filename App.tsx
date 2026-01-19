@@ -33,6 +33,7 @@ const AppNavigator = () => {
   const [isSplashTimeOver, setIsSplashTimeOver] = useState(false);
   const { language } = useLanguage();
   
+  
   const { expoPushToken, notification } = usePushNotifications();
 
   useEffect(() => {
@@ -48,15 +49,15 @@ const AppNavigator = () => {
   }, [expoPushToken]);
 
   // 3. Minimum Splash Süresi
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsSplashTimeOver(true);
-    }, 2500); 
-    return () => clearTimeout(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setIsSplashTimeOver(true);
+  //   }, 2500); 
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   if (isLoading || !isSplashTimeOver) {
-    return <SplashScreen />;
+    return <SplashScreen onAnimationEnd={() => setIsSplashTimeOver(true)} />;
   }
   
   return (

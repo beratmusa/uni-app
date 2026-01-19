@@ -114,7 +114,6 @@ export const fetchGradesFromApi = async (token: string): Promise<Course[]> => {
 
             } catch (e) {
                 console.error(`Ders detayı hatası (${lesson.LessonCode}):`, e);
-                // Hata durumunda boş veri dön
                 return {
                     id: lesson.ClassId,
                     code: lesson.LessonCode,

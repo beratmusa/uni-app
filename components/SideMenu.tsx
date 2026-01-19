@@ -104,7 +104,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
   const handleUbysClick = () => {
     if (token) {
       const targetUrl = `${UBYS_BASE_URL}${token}`;
-      console.log("UBYS Açılıyor:", targetUrl);
       
       handleOpenWeb(targetUrl, dictionary.login);
     } else {
@@ -142,7 +141,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
         return null;
     } catch (e) {
-        console.error("Öğrenci bilgisi hatası:", e);
         return null;
     }
   };
@@ -202,7 +200,6 @@ export const SideMenu = ({ onClose, onScrollToDining, onScrollToContact }: SideM
 
     } 
     catch (error) {
-      console.error(error);
       showAlert('error', t.errorTitle, t.serverError);
     }
   };

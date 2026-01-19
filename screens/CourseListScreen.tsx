@@ -16,7 +16,6 @@ export const CourseListScreen = () => {
   const { token } = useAuth();
   
   const [loading, setLoading] = useState(true);
-  // State tipini servisten gelen 'Course' olarak ayarladık
   const [courses, setCourses] = useState<Course[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -27,13 +26,10 @@ export const CourseListScreen = () => {
     }
 
     try {
-        // 1. Ortak servisi çağır (Tüm hesaplamalar burada yapılıp gelir)
         const data = await fetchGradesFromApi(token);
 
-        // 2. State'i güncelle
         setCourses(data);
 
-        // 3. ÖNEMLİ: Veriyi arka plan kontrolü için kaydet (Önbellek)
         await AsyncStorage.setItem('cachedGrades', JSON.stringify(data));
 
     } catch (error: any) {
@@ -56,7 +52,6 @@ export const CourseListScreen = () => {
   };
 
   const renderItem = ({ item }: { item: Course }) => {
-      // Servisten gelen 'letterGrade' zaten hesaplanmış olduğu için direkt kullanıyoruz
       const isFailed = item.letterGrade === "FF" || item.letterGrade === "FD";
       const hasGrade = item.letterGrade !== "-";
       

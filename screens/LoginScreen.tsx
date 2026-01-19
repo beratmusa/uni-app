@@ -21,18 +21,15 @@ export const LoginScreen = () => {
       
       if (match && match[1]) {
         const capturedToken = match[1];
-        console.log("🔥 TOKEN YAKALANDI, DOĞRULANIYOR...", capturedToken);
 
         setIsValidating(true);
 
         const isValid = await validateToken(capturedToken);
 
         if (isValid) {
-            console.log("✅ Token doğrulandı, giriş yapılıyor.");
             await login(capturedToken);
             navigation.goBack();
         } else {
-            console.log("❌ Token doğrulanamadı.");
             Alert.alert("Giriş Hatası", "Oturum doğrulanamadı. Lütfen tekrar deneyin.");
             setIsValidating(false);
         }
