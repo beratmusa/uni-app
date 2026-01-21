@@ -9,12 +9,10 @@ const TASK_NAME = 'DAILY_GRADE_CHECK';
 TaskManager.defineTask(TASK_NAME, async () => {
   try {
     const now = new Date().toLocaleTimeString();
-    console.log(`[${now}] 🔄 Arka plan görevi tetiklendi!`);
 
     // 1. Token Kontrolü
     const token = await AsyncStorage.getItem('userToken');
     if (!token) {
-        console.log("Token yok, görev atlandı.");
         return BackgroundFetch.BackgroundFetchResult.NoData;
     }
 
@@ -23,7 +21,6 @@ TaskManager.defineTask(TASK_NAME, async () => {
     const oldGrades: Course[] = oldGradesStr ? JSON.parse(oldGradesStr) : [];
 
     // 3. Yeni Veriyi API'den Çek
-    console.log("API'den notlar çekiliyor...");
     const currentGrades = await fetchGradesFromApi(token);
 
     // 4. Karşılaştırma
@@ -60,18 +57,15 @@ TaskManager.defineTask(TASK_NAME, async () => {
             trigger: null,
         });
         
-        console.log(`📢 BİLDİRİM GÖNDERİLDİ: ${changedCourseName}`);
         
         // Yeni veriyi kaydet
         await AsyncStorage.setItem('cachedGrades', JSON.stringify(currentGrades));
         return BackgroundFetch.BackgroundFetchResult.NewData;
     }
 
-    console.log("✅ Değişiklik yok.");
     return BackgroundFetch.BackgroundFetchResult.NoData;
 
   } catch (error) {
-    console.error("❌ Arka plan hatası:", error);
     return BackgroundFetch.BackgroundFetchResult.Failed;
   }
 });
@@ -81,7 +75,6 @@ export async function registerDailyTask() {
   try {
     // Arka plan işlemleri destekleniyor mu?
     const status = await BackgroundFetch.getStatusAsync();
-    console.log("Mevcut Arka Plan Durumu:", status);
     // --- DÜZELTME BURADA YAPILDI (Status -> BackgroundFetchStatus) ---
     // if (status === BackgroundFetch.BackgroundFetchStatus.Restricted || status === BackgroundFetch.BackgroundFetchStatus.Denied) {
     //     console.log("⚠️ Arka plan işlemleri kısıtlı veya reddedildi!");
@@ -90,7 +83,6 @@ export async function registerDailyTask() {
 
     const isRegistered = await TaskManager.isTaskRegisteredAsync(TASK_NAME);
     if (isRegistered) {
-        console.log("Görev zaten kayıtlı, tekrar kaydedilmiyor.");
         return;
     }
 
@@ -101,7 +93,6 @@ export async function registerDailyTask() {
         startOnBoot: true,        
     });
     
-    console.log("📅 Not kontrol görevi sisteme kaydedildi (Her 15 dk).");
   } catch (err) {
     console.log("Görev kaydı başarısız:", err);
   }

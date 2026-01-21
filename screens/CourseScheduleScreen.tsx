@@ -6,13 +6,12 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
-// API'den gelen verinin tipi
 interface Lesson {
   LessonCode: string;
   LessonName: string;
   StartTime: string;
   EndTime: string;
-  Day: number; // 1 = Pazartesi, 2 = Salı...
+  Day: number;
   TeacherName: string;
   TeacherTitle: string;
   ClassName: string;
@@ -26,7 +25,6 @@ export const CourseScheduleScreen = () => {
   
   const [loading, setLoading] = useState(true);
   const [scheduleData, setScheduleData] = useState<Lesson[]>([]);
-  // Başlangıçta 1. gün (Pazartesi) seçili olsun
   const [selectedDay, setSelectedDay] = useState(1); 
 
   const t = dictionary.courseSchedule || {
@@ -93,7 +91,7 @@ export const CourseScheduleScreen = () => {
     <View className="bg-white pb-2 shadow-sm">
       <ScrollView horizontal showsHorizontalScrollIndicator={false} className="pl-4 py-2">
         {weekDays.map((dayName: string, index: number) => {
-          const dayNumber = index + 1; // 1-Based index
+          const dayNumber = index + 1;
           const isSelected = selectedDay === dayNumber;
           
           return (

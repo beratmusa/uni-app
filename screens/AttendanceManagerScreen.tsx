@@ -12,7 +12,7 @@ interface RouteParams {
   classId: number;
   scheduleId: number;
   courseName: string;
-  courseHours: { [key: string]: string }; // Örn: { "1": "08:30-09:15", "2": "09:30-10:15" }
+  courseHours: { [key: string]: string };
 }
 
 interface Student {
@@ -222,7 +222,6 @@ export const AttendanceManagerScreen = ({ navigation, route }: any) => {
             } else if (json.Data.Data && json.Data.Data.Result) {
                 
                 if (activeTab === 'QR') {
-                    // SADECE timestamp EKLİYORUZ
                     const qrPayload = {
                         scheduleId: params.scheduleId,
                         scheduleorder: parseInt(targetHour),

@@ -91,7 +91,7 @@ export const QRScannerScreen = () => {
     });
   };
 
-  // --- ÖĞRENCİ ID'SİNİ ÇEKEN YARDIMCI FONKSİYON (GÜNCELLENDİ) ---
+  // --- ÖĞRENCİ ID'SİNİ ÇEKEN YARDIMCI FONKSİYON ---
   const fetchMyStudentId = async (): Promise<number | null> => {
     try {
         const response = await fetch('https://mobil.kastamonu.edu.tr/api/Student/GetMyStudentInfo', {
@@ -147,9 +147,7 @@ export const QRScannerScreen = () => {
             
             const diffInMinutes = (now - createTime) / 1000 / 60;
 
-            if (diffInMinutes > 5) { 
-                console.log("Süre aşımı tespit edildi. İstek iptal ediliyor.");
-                
+            if (diffInMinutes > 5) {                 
                 showAlert(
                     'error', 
                     t.errorTitle, 
@@ -169,13 +167,7 @@ export const QRScannerScreen = () => {
             return;
         }
 
-        console.log("Sunucuya giden veri:", {
-            scheduleId: qrData.scheduleId,
-            IsAttended: true,
-            scheduleorder: qrData.scheduleorder,
-            studentId: studentId,
-            isblock: qrData.isblock
-        });
+        
 
         const response = await fetch('https://ubys.kastamonu.edu.tr/Framework/Integration/api/IntegratedService/Service', {
             method: 'POST',

@@ -44,7 +44,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // --- KULLANICI BİLGİLERİNİ ÇEKME ---
   const fetchUserInfo = async (tokenToUse: string): Promise<boolean> => {
     try {
-      console.log("🚀 Kullanıcı bilgileri isteniyor...");
       const cleanToken = tokenToUse.trim();
 
       const response = await fetch('https://mobil.kastamonu.edu.tr/api/Authentication/GetMyInfo', {
@@ -58,8 +57,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("✅ Kullanıcı:", data.TitleNameSurname);
-        console.log("✅ Kullanıcı token:", cleanToken);
+        // console.log("✅ Kullanıcı:", data.TitleNameSurname);
+        // console.log("✅ Kullanıcı token:", cleanToken);
         
         // --- ROL KONTROLÜ (SADECE APPLICATION NAME İLE) ---
         let studentStatus = false;
@@ -74,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           );
         }
 
-        console.log(`🎓 Rol Tespiti -> Öğrenci: ${studentStatus}, Eğitmen: ${instructorStatus}`);
+          // console.log(`🎓 Rol Tespiti -> Öğrenci: ${studentStatus}, Eğitmen: ${instructorStatus}`);
 
         setIsStudent(studentStatus);
         setIsInstructor(instructorStatus);
@@ -85,7 +84,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
     } catch (error) {
-      console.error("fetchUserInfo Hatası:", error);
       return false; 
     }
   };

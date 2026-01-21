@@ -31,7 +31,7 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [imageHeight, setImageHeight] = useState(250);
 
-  // Veri değiştiğinde resmi ayarla (Artık Duyuruların resmi de burada yakalanacak)
+  // Veri değiştiğinde resmi ayarla
   useEffect(() => {
     setActiveImage(data?.image || null);
   }, [data]);
@@ -43,7 +43,6 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
         const newHeight = (screenWidth / w) * h;
         setImageHeight(newHeight);
       }, (error) => {
-        console.log("Resim boyutu alınamadı veya resim yok:", error);
       });
     }
   }, [activeImage]);
@@ -56,7 +55,6 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
         message: `${data.title}\n\nKastamonu Üniversitesi Mobil`,
       });
     } catch (error) {
-      console.log(error);
     }
   };
 
@@ -67,10 +65,10 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
       lineHeight: 24, 
       color: '#374151', 
       marginBottom: 12,
-      textAlign: 'justify' as const // Metni iki yana yaslar
+      textAlign: 'justify' as const 
     },
     div: {
-      textAlign: 'justify' as const // div içindeki metinleri de yaslar
+      textAlign: 'justify' as const 
     },
     a: { color: '#2563eb', textDecorationLine: 'none' },
     img: { width: '100%', borderRadius: 12, marginVertical: 10 },
@@ -115,7 +113,7 @@ export const DetailModal = ({ visible, data, onClose }: DetailModalProps) => {
               <Image 
                 source={{ uri: activeImage }} 
                 style={{ width: screenWidth, height: imageHeight }}
-                resizeMode="cover" // Resmin alanı daha iyi doldurması için cover yaptık
+                resizeMode="cover"
               />
             </View>
           )}

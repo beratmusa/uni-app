@@ -16,7 +16,6 @@ export const CourseListScreen = () => {
   const { token } = useAuth();
   
   const [loading, setLoading] = useState(true);
-  // State tipini servisten gelen 'Course' olarak ayarladık
   const [courses, setCourses] = useState<Course[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -27,13 +26,10 @@ export const CourseListScreen = () => {
     }
 
     try {
-        // 1. Ortak servisi çağır (Tüm hesaplamalar burada yapılıp gelir)
         const data = await fetchGradesFromApi(token);
 
-        // 2. State'i güncelle
         setCourses(data);
 
-        // 3. ÖNEMLİ: Veriyi arka plan kontrolü için kaydet (Önbellek)
         await AsyncStorage.setItem('cachedGrades', JSON.stringify(data));
 
     } catch (error: any) {
@@ -56,9 +52,17 @@ export const CourseListScreen = () => {
   };
 
   const renderItem = ({ item }: { item: Course }) => {
-      // Servisten gelen 'letterGrade' zaten hesaplanmış olduğu için direkt kullanıyoruz
-      const isFailed = item.letterGrade === "FF" || item.letterGrade === "FD";
-      const hasGrade = item.letterGrade !== "-";
+      const vizeGirildi = item.vize !== "-" && item.vize != null;
+      const finalVeyaButGirildi = (item.final !== "-" && item.final != null) || 
+                                  (item.butunleme !== "-" && item.butunleme != null);
+
+      const notlarTamam = vizeGirildi && finalVeyaButGirildi;
+
+
+      const displayGrade = notlarTamam ? item.letterGrade : "-";
+
+      const isFailed = displayGrade === "FF" || displayGrade === "FD";
+      const hasGrade = displayGrade !== "-";
       
       const badgeBg = hasGrade ? (isFailed ? "bg-red-50" : "bg-green-50") : "bg-slate-50";
       const badgeText = hasGrade ? (isFailed ? "text-red-600" : "text-green-600") : "text-slate-400";
@@ -74,7 +78,7 @@ export const CourseListScreen = () => {
                 {/* HARF NOTU BADGE */}
                 <View className={`px-3 py-1.5 rounded-xl ${badgeBg} items-center justify-center min-w-[40px]`}>
                     <Text className={`font-black text-sm ${badgeText}`}>
-                        {item.letterGrade}
+                        {displayGrade} 
                     </Text>
                 </View>
             </View>
