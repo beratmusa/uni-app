@@ -52,8 +52,17 @@ export const CourseListScreen = () => {
   };
 
   const renderItem = ({ item }: { item: Course }) => {
-      const isFailed = item.letterGrade === "FF" || item.letterGrade === "FD";
-      const hasGrade = item.letterGrade !== "-";
+      const vizeGirildi = item.vize !== "-" && item.vize != null;
+      const finalVeyaButGirildi = (item.final !== "-" && item.final != null) || 
+                                  (item.butunleme !== "-" && item.butunleme != null);
+
+      const notlarTamam = vizeGirildi && finalVeyaButGirildi;
+
+
+      const displayGrade = notlarTamam ? item.letterGrade : "-";
+
+      const isFailed = displayGrade === "FF" || displayGrade === "FD";
+      const hasGrade = displayGrade !== "-";
       
       const badgeBg = hasGrade ? (isFailed ? "bg-red-50" : "bg-green-50") : "bg-slate-50";
       const badgeText = hasGrade ? (isFailed ? "text-red-600" : "text-green-600") : "text-slate-400";
@@ -69,7 +78,7 @@ export const CourseListScreen = () => {
                 {/* HARF NOTU BADGE */}
                 <View className={`px-3 py-1.5 rounded-xl ${badgeBg} items-center justify-center min-w-[40px]`}>
                     <Text className={`font-black text-sm ${badgeText}`}>
-                        {item.letterGrade}
+                        {displayGrade} 
                     </Text>
                 </View>
             </View>

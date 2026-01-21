@@ -196,7 +196,7 @@ export const DigitalIDScreen = () => {
           'Content-Type': 'application/json',
           'X-Api-Key': 'Kastamonu-37-XyZ-998877'
         },
-        body: JSON.stringify({ Email: email, ResimleriDahilEt: false })
+        body: JSON.stringify({ Email: email, ResimleriDahilEt: true })
       });
 
       const profiles: SearchProfile[] = await searchRes.json();
